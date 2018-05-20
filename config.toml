@@ -19,7 +19,7 @@ post = "/:year/:month/:day/:slug/"
 
 [params]
   # Sets the meta tag description
-  description          = "ifelse(analysing,write,play outside)"
+  description          = ""
   # Sets the navbarTitle that appears in the top left of the navigation bar
   navbarTitle          = "Chi's Impe[r]fect Blog"
   # Sets where "View More Posts" links
@@ -30,7 +30,7 @@ post = "/:year/:month/:day/:slug/"
   dynamicTitles        = false
   # Sets RSS icons to appear on the sidebar with the social media buttons
   rssAppearAtTop       = false
-  rssAppearAtBottom    = false
+  rssAppearAtBottom    = true
   # Sets Social Media icons to appear on the sidebar
   socialAppearAtTop    = false
   socialAppearAtBottom = true
@@ -54,7 +54,7 @@ post = "/:year/:month/:day/:slug/"
   socialShareFacebook  = true
   socialShareReddit    = true
   socialShareLinkedin  = true
-  socialShareStumbleupon = true
+  socialShareStumbleupon = false
   socialSharePinterest = true
   socialShareEmail     = true
 
@@ -132,11 +132,11 @@ post = "/:year/:month/:day/:slug/"
   identifier = "fa fa-newspaper-o"
   weight = 3
   
-#[[menu.main]]
-#  name = "Categories"
-#  url = "/categories/"
-#  identifier = "fa fa-sitemap"
-#  weight = 5
+[[menu.main]]
+  name = "R-Bloggers"
+  url = "https://www.r-bloggers.com/"
+  identifier = "fa fa-rss"
+  weight = 5
 
 #[[menu.main]]
 #  name = "Itemized"

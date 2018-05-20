@@ -1,0 +1,39 @@
+---
+title: Daylight in Vancouver (Canada) vs Tokyo (Japan)
+author: Chisato
+date: '2018-05-20'
+slug: daylight-time-in-vancouver-canada-vs-tokyo-japan
+categories:
+  - R
+tags:
+  - ggplot2
+  - suncalc
+description: 'Daylight differences between Vancouver & Tokyo visualized with ggplot2'
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+
+
+<p>I currently live in British Columbia, Canada. So I live above 49th parallel line. One of things that’s pretty awesome living up north is the fact you get so much longer daylights in summer time! Currently it’s May, and I’m just in love with longer daylight we are getting day by day (well till June 21st)!</p>
+<p>Recently I came across R package called <a href="https://CRAN.R-project.org/package=suncalc">suncalc</a>, so I had to try out using the package to pull the timetable for sunrise &amp; sunset for different locations and visualize the result using <a href="http://ggplot2.tidyverse.org/">ggplot2</a>.</p>
+<div id="vancouver-2018-daylight-visualized" class="section level2">
+<h2>🇨🇦 Vancouver 2018 Daylight Visualized ☀️</h2>
+<p>For <strong>Vancouver</strong> - I used coordinate 49.2827° N, 123.1207° W 🌎</p>
+<p>I’ve coloured nighttime with dark blue colour, while I’ve coloured day time with light yellow-ish colour using <a href="http://ggplot2.tidyverse.org/reference/geom_ribbon.html">geom_ribbon</a>.</p>
+<p>The latest sunset Vancouver will observe is June 25th! It’s not same as the longest daylight. Earliest I’d have to wake up to catch sunrise is June 16th at 5:07am. 😀</p>
+<p><img src="/post/2018-05-20-daylight-time-in-vancouver-canada-vs-tokyo-japan_files/figure-html/vancouver-1.png" width="1056" /></p>
+</div>
+<div id="tokyo-2018-daylight-visualized" class="section level2">
+<h2>🇯🇵 Tokyo 2018 Daylight Visualized ☀️</h2>
+<p>For <strong>Tokyo</strong> - I used coordinate 35.6895° N, 139.6917° E 🌏</p>
+<p>Japan does not practice daylight savings, so there’s no glitch in March and November, the line is smooth in below chart. The earliest sunrise Tokyo gets is 4:26am on June 13th. This makes me think Japan could actually benefit from practiving daylight savings, so that sunrise is delayed till 5:26am, while they can enjoy the sun as late as 8pm in June!</p>
+<p><img src="/post/2018-05-20-daylight-time-in-vancouver-canada-vs-tokyo-japan_files/figure-html/tokyo-1.png" width="1056" /></p>
+</div>
+<div id="sunrise-sunset-time-compared-for-vancouver-and-tokyo" class="section level2">
+<h2>Sunrise &amp; Sunset Time Compared for Vancouver and Tokyo�</h2>
+<p>And here’s sunrise &amp; sunset time compared against two cities.</p>
+<p><img src="/post/2018-05-20-daylight-time-in-vancouver-canada-vs-tokyo-japan_files/figure-html/vantokyo-1.png" width="1056" /></p>
+</div>

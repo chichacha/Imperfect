@@ -1,0 +1,213 @@
+---
+title: Daylight in Vancouver (Canada) vs Tokyo (Japan)
+author: Chisato
+date: '2018-05-20'
+slug: daylight-time-in-vancouver-canada-vs-tokyo-japan
+categories:
+  - R
+tags:
+  - ggplot2
+  - suncalc
+description: 'Daylight differences between Vancouver & Tokyo visualized with ggplot2'
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+I currently live in British Columbia, Canada.  So I live above 49th parallel line. One of things that's pretty awesome living up north is the fact you get so much longer daylights in summer time! Currently it's May, and I'm just in love with longer daylight we are getting day by day (well till June 21st)!  
+
+Recently I came across R package called [suncalc](https://CRAN.R-project.org/package=suncalc), so I had to try out using the package to pull the timetable for sunrise & sunset for different locations and visualize the result using [ggplot2](http://ggplot2.tidyverse.org/). 
+
+```{r preps, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+## Load up the pakcage I'm going to use here
+library(tidyverse) 
+library(suncalc)  ## https://CRAN.R-project.org/package=suncalc
+library(scales) ## So I can use date_breaks etc on chart
+library(lubridate) ## for dealing with time!
+library(ggrepel) ## so the label don't overlap
+library(knitr)
+
+```
+
+
+
+```{r datapull, echo=FALSE}
+##  dawn - sunrise - goldenHourEnd ==> Great time for photography in the morning.
+##  goldenHour - sunset, desk ==> Great time for photography in the evening.
+interest <- c("dawn","sunrise","goldenHourEnd","goldenHour","sunset","dusk")
+
+## Use #getSunlightTimes function to pull data for 2018 Jan 1 to December 31
+#https://www.suncalc.org/#/49.2827,-123.1207,8/2018.05.20/23:59/1/0
+vancouver <-getSunlightTimes(date = seq.Date(as.Date("2018-01-01"), as.Date("2018-12-31"), by = 1),
+                 keep = interest,
+                 lat = 49.2827, lon = -123.1207, tz="US/Pacific")
+
+
+#https://www.suncalc.org/#/35.6895,139.6917,8/2018.05.20/09:41/1/0
+tokyo <- getSunlightTimes(date = seq.Date(as.Date("2018-01-01"), as.Date("2018-12-31"), by = 1),
+                          keep = interest,
+                          lat = 35.6895, lon = 139.6917, tz = "Japan")
+
+
+event.2018 <- tibble(
+  date = as.Date(c("2018-03-20","2018-06-21","2018-09-22","2018-12-21")),
+  name = c("Spring Equinox","Summer Solstice","Fall Equinox","Winter Solstice")
+)
+
+## I want just hour:minute:seconds part NOT date part :)
+vancouver <- vancouver %>% 
+  mutate_at(.vars=interest, funs(hms::hms(second(.),minute(.),hour(.))))
+
+tokyo <- tokyo %>% 
+  mutate_at(.vars=interest, funs(hms::hms(second(.),minute(.),hour(.))))
+
+
+## Convert above table to Long Format! 
+vancouver.long <- vancouver %>% 
+  select(-lat,-lon) %>%  ## i don't really need lat long
+  gather(key="property", value="time", -date)
+
+tokyo.long <- tokyo %>% 
+  select(-lat,-lon) %>%  ## i don't really need lat long
+  gather(key="property", value="time", -date)
+
+
+## Earliest Sunset & Latest Sunset
+vancouver.anno <-vancouver.long %>% 
+  filter(property %in% c("sunset","sunrise"))%>% 
+  group_by(property) %>% 
+  mutate(prop.rank=row_number(time)) %>% filter(prop.rank %in% c(1,365)) %>%
+  mutate(explain = paste(format(as.Date(date),"%b %d %a"),"@",time)) 
+
+
+tokyo.anno <-tokyo.long %>% 
+  filter(property %in% c("sunset","sunrise"))%>% 
+  group_by(property) %>% 
+  mutate(prop.rank=row_number(time)) %>% filter(prop.rank %in% c(1,365)) %>%
+  mutate(explain = paste(format(as.Date(date),"%b %d %a"),"@",time)) 
+
+
+
+## y-axis. I want all 24 hours
+hms.for.plot <- hms::hms(second=rep(0,24), minute=rep(0,24), hour=seq(0,23))
+hms.for.plot <-c(hms.for.plot, hms::hms(second=0,minute=0,hour=24))
+
+
+#hms.for.plot
+hms.label <- c("midnight","","","3am","","","6am","","","9am","","","Noon","","","3pm","","","6pm","","","9pm","","","midnight")
+
+
+```
+
+
+
+
+## 🇨🇦 Vancouver 2018 Daylight Visualized ☀️
+
+For **Vancouver** - I used coordinate  49.2827° N, 123.1207° W 🌎
+
+I've coloured nighttime with dark blue colour, while I've coloured day time with light yellow-ish colour using [geom_ribbon](http://ggplot2.tidyverse.org/reference/geom_ribbon.html).  
+
+The latest sunset Vancouver will observe is June 25th! It's not same as the longest daylight.  Earliest I'd have to wake up to catch sunrise is June 16th at 5:07am. 😀  
+
+```{r vancouver, echo=FALSE, fig.height=7, fig.width=11, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+vancouver.long %>% ggplot(aes(x=as.Date(date))) + 
+  geom_line(aes(y=time, group=property), linetype=1, size=0.2) +
+  geom_ribbon(data=vancouver, aes(ymin=sunrise, ymax=sunset), fill="#E6DF44", alpha=0.9) +
+  geom_ribbon(data=vancouver, aes(ymin=min(hms.for.plot), ymax=sunrise), fill="#011A27", alpha=0.9) +
+  geom_ribbon(data=vancouver, aes(ymax=dawn, ymin=goldenHourEnd), fill="#F0810F", alpha=0.3) +
+  geom_ribbon(data=vancouver, aes(ymax=max(hms.for.plot), ymin=sunset), fill="#011A27", alpha=0.9) +
+  geom_ribbon(data=vancouver, aes(ymax=goldenHour, ymin=dusk), fill="#F0810F", alpha=0.3) +
+  geom_vline(xintercept=as.numeric(event.2018$date), linetype=3, color="white") +
+  theme_minimal(base_family="Roboto Condensed", base_size=18) +
+  scale_y_time(breaks=hms.for.plot, labels=hms.label) + 
+  expand_limits(y=c(hms.for.plot[1], hms.for.plot[25])) +
+  scale_x_date(breaks=date_breaks("month"), label=date_format("%b\n%Y")) +
+  labs(title="Vancouver, BC, Canada",subtitle="Daytime vs Nighttime during 2018", x="", y="") +
+  geom_point(data=vancouver.anno, aes(y=time)) +
+  geom_label_repel(data=vancouver.anno, aes(y=time, label=explain), 
+                   family="Roboto Condensed", fill="#ffffff80") +
+  annotate(geom="text",x=event.2018$date,y=rep(hms.for.plot[13],4),
+           label=event.2018$name, hjust=0.5, vjust=0,size=4, 
+           color="#063852",angle=90, family="Roboto Condensed")
+
+```
+
+
+
+## 🇯🇵 Tokyo 2018 Daylight Visualized ☀️
+
+For **Tokyo** - I used coordinate 35.6895° N, 139.6917° E 🌏
+
+Japan does not practice daylight savings, so there's no glitch in March and November, the line is smooth in below chart. The earliest sunrise Tokyo gets is 4:26am on June 13th. This makes me think Japan could actually benefit from practiving daylight savings, so that sunrise is delayed till 5:26am, while they can enjoy the sun as late as 8pm in June! 
+
+```{r tokyo, echo=FALSE, fig.height=7, fig.width=11, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+## Plot for Tokyo
+tokyo.long %>% ggplot(aes(x=as.Date(date))) + 
+  geom_line(aes(y=time, group=property), linetype=1, size=0.2) +
+  geom_ribbon(data=tokyo, aes(ymin=sunrise, ymax=sunset), fill="#E6DF44", alpha=0.9) +
+  geom_ribbon(data=tokyo, aes(ymin=min(hms.for.plot), ymax=sunrise), fill="#011A27", alpha=0.9) +
+  geom_ribbon(data=tokyo, aes(ymax=dawn, ymin=goldenHourEnd), fill="#F0810F", alpha=0.3) +
+  geom_ribbon(data=tokyo, aes(ymax=max(hms.for.plot), ymin=sunset), fill="#011A27", alpha=0.9) +
+  geom_ribbon(data=tokyo, aes(ymax=goldenHour, ymin=dusk), fill="#F0810F", alpha=0.3) +
+  geom_vline(xintercept=as.numeric(event.2018$date), linetype=3, color="white") +
+  theme_minimal(base_family="Roboto Condensed", base_size=18) +
+  scale_y_time(breaks=hms.for.plot, labels=hms.label) + 
+  expand_limits(y=c(hms.for.plot[1], hms.for.plot[25])) +
+  scale_x_date(breaks=date_breaks("month"), label=date_format("%b\n%Y")) +
+  labs(title="Tokyo, Japan",subtitle="Daytime vs Nighttime during 2018", x="", y="") +
+  geom_point(data=tokyo.anno, aes(y=time)) +
+  geom_label_repel(data=tokyo.anno, aes(y=time, label=explain), 
+                   family="Roboto Condensed", fill="#ffffff80") +
+  annotate(geom="text",x=event.2018$date,y=rep(hms.for.plot[13],4),
+           label=event.2018$name, hjust=0.5, vjust=0,size=4, 
+           color="#063852",angle=90, family="Roboto Condensed")
+
+
+```
+
+
+## Sunrise & Sunset Time Compared for Vancouver and Tokyo�
+
+And here's sunrise & sunset time compared against two cities.
+
+```{r vantokyo, echo=FALSE, fig.height=7, fig.width=11, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+
+## I could've combined earlier 
+vancouver$city <- "vancouver"
+tokyo$city <- "tokyo"
+comb <- rbind(vancouver, tokyo)
+
+comb.long <- comb %>% select(-lat, -lon) %>% gather(key="property",value="time",-date, -city) %>% 
+  mutate(date=as.Date(date)) 
+
+comb.long %>% filter(property %in% c("sunset","sunrise")) %>% 
+  ggplot(aes(x=date, y=time)) + 
+  geom_line(aes(color=city, linetype=property), size=1.5, alpha=0.8)  + 
+  geom_point(aes(color=city), size=10, alpha=0.01) +
+  theme_minimal(base_family="Roboto Condensed", base_size=18) + 
+  scale_color_manual(values=c("#E1B16A","#CE5A57")) +
+  scale_fill_manual(values=c("#E1B16A","#CE5A57")) +
+  scale_linetype_manual(values=c(1,1), guide="none") +
+  scale_y_time(breaks=hms.for.plot) + 
+  scale_x_date(breaks=date_breaks("month"), label=date_format("%b\n%Y")) +
+  labs(title="Tokyo vs Vancouver - Sunset & Sunrise Time Compared", 
+       subtitle="Sunrise time is always earlier in Tokyo\nSunset time is earlier in Tokyo (except in Nov, Dec, Jan)",
+       x="",y="") +
+  theme(legend.position="top") +
+  annotate(geom="text",x=event.2018$date,y=rep(hms.for.plot[13],4),
+           label=event.2018$name, hjust=0.5, vjust=0,size=4, 
+           color="#063852",angle=90, family="Roboto Condensed") +
+  geom_vline(xintercept=as.numeric(event.2018$date), linetype=3, color="#06385260")
+
+
+
+```
+
+
+
