@@ -1,0 +1,51 @@
+---
+title: Testing Entry with R Rmarkdown File
+author: Chisato
+date: '2018-05-19'
+slug: testing-entry-with-r-rmarkdown-file
+categories:
+  - R
+tags:
+  - Test
+description: 'My first blog entry'
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+
+
+<div id="hello-world" class="section level2">
+<h2>Hello! World!</h2>
+<p>Just figuring out how the blog post works with this random set of coffee data.</p>
+</div>
+<div id="espresso-drinks-visualized-with-ggplot2-pie-chart" class="section level2">
+<h2>Espresso Drinks Visualized with ggplot2 Pie Chart</h2>
+<p>Pie chart can be created with using polar coordinate.</p>
+<pre class="r"><code>## Pie Chart
+coffee_long  %&gt;% ggplot() +
+  geom_bar(aes(x=sqrt(total.amount)/2, y = amount, 
+               fill=fct_rev(ingredient.f), width=sqrt(total.amount)), 
+           stat=&quot;identity&quot;, position=&quot;fill&quot;) + 
+  facet_wrap(~name2, ncol=4) +
+  geom_text(aes(x=sqrt(total.amount), y=Inf, label=&quot;&quot;), size=7) +
+  theme_void(base_family=&quot;Roboto Condensed&quot;) +
+  coord_polar(theta=&quot;y&quot;) +
+  scale_fill_hue(name=&quot;Ingredient&quot;, l=80) +
+  theme(legend.position=&quot;top&quot;)</code></pre>
+<p><img src="/post/2018-05-19-testing-entry-with-r-rmarkdown-file_files/figure-html/coffee_piechart-1.png" width="672" /></p>
+</div>
+<div id="espresso-drinks-visualized-with-ggplot2-bar-chart" class="section level2">
+<h2>Espresso Drinks Visualized with ggplot2 Bar Chart</h2>
+<pre class="r"><code>## Bar Chart
+
+coffee_long  %&gt;% ggplot() +
+  geom_bar(aes(x=3, y = amount, fill=fct_rev(ingredient.f), width=sqrt(total.amount)/2),
+           stat=&quot;identity&quot;, position=&quot;stack&quot;) + 
+  facet_wrap(~name2, ncol=4) +
+  theme_void(base_family=&quot;Roboto Condensed&quot;) +
+  scale_fill_hue(name=&quot;Ingredient&quot;, l=80) +
+  theme(legend.position=&quot;top&quot;)</code></pre>
+<p><img src="/post/2018-05-19-testing-entry-with-r-rmarkdown-file_files/figure-html/coffee_barchart-1.png" width="672" /></p>
+</div>

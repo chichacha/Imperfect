@@ -1,0 +1,90 @@
+---
+title: Testing Entry with R Rmarkdown File
+author: Chisato
+date: '2018-05-19'
+slug: testing-entry-with-r-rmarkdown-file
+categories:
+  - R
+tags:
+  - Test
+description: 'My first blog entry'
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+## Hello! World!  
+
+Just figuring out how the blog post works with this random set of coffee data. 
+
+```{r setups, include=FALSE}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+
+## Reading CSV file
+coffee <- read_csv(file="https://docs.google.com/spreadsheets/d/e/2PACX-1vQ2jdE2tPU_gO0jpCmYdvC43aLQUmvv3oipnjKZ1tE8LZopE2eM5JhkJTRV66r6Sox2omTd34rAMrBT/pub?gid=0&single=true&output=csv")
+
+## here's table I've imported from above CSV file.
+coffee %>% kable("html") %>% kable_styling(c("striped","condensed"))
+
+## convert wide table to long table for viz
+coffee_long <- coffee %>% 
+  gather(key=ingredient, value=amount, -Name, na.rm=T) %>%
+  group_by(Name) %>% 
+  mutate(total.amount=sum(amount)) %>%
+  ungroup() %>% 
+  mutate(name2=fct_reorder(Name,.x=total.amount, .fun=max)) %>%
+  mutate(ingredient.f = factor(ingredient, 
+                               levels= c("Vanilla Icecream","Ice Cubes",
+                                         "Espresso","Coffee","Chocolate",
+                                         "Steamed Milk","Formed Milk",
+                                         "Hot Water","Half & Half","Whip Cream")))
+
+```
+
+
+## Espresso Drinks Visualized with ggplot2 Pie Chart
+
+Pie chart can be created with using polar coordinate. 
+
+```{r coffee_piechart,  message=FALSE, warning=FALSE}
+
+## Pie Chart
+coffee_long  %>% ggplot() +
+  geom_bar(aes(x=sqrt(total.amount)/2, y = amount, 
+               fill=fct_rev(ingredient.f), width=sqrt(total.amount)), 
+           stat="identity", position="fill") + 
+  facet_wrap(~name2, ncol=4) +
+  geom_text(aes(x=sqrt(total.amount), y=Inf, label=""), size=7) +
+  theme_void(base_family="Roboto Condensed") +
+  coord_polar(theta="y") +
+  scale_fill_hue(name="Ingredient", l=80) +
+  theme(legend.position="top")
+
+
+```
+
+
+## Espresso Drinks Visualized with ggplot2 Bar Chart
+
+```{r coffee_barchart, message=F, warning=F}
+
+## Bar Chart
+
+coffee_long  %>% ggplot() +
+  geom_bar(aes(x=3, y = amount, fill=fct_rev(ingredient.f), width=sqrt(total.amount)/2),
+           stat="identity", position="stack") + 
+  facet_wrap(~name2, ncol=4) +
+  theme_void(base_family="Roboto Condensed") +
+  scale_fill_hue(name="Ingredient", l=80) +
+  theme(legend.position="top")
+
+
+```
+
+
+
+
+
