@@ -16,7 +16,7 @@ linktitle: ''
 
 ## Hello! World!  
 
-Just figuring out how the blog post works with this random set of coffee data. 
+Just figuring out how the blog post works with this random set of coffee data!
 
 ```{r setups, include=FALSE}
 library(tidyverse)
