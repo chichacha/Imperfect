@@ -1,0 +1,117 @@
+---
+title: '16 Personalities with Circlize '
+author: Chisato
+date: '2018-05-20'
+slug: 16-personalities-with-circizle
+categories:
+  - R
+tags:
+  - circlize
+description: '16 Personalities displayed in circle with circlize package'
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+
+
+<div id="personalities" class="section level2">
+<h2>16 Personalities</h2>
+<p>While back, my husband introduced me to this fun online personalities test called <a href="https://www.16personalities.com/">16 personalities</a>. I’ve taken the test, and my personalities type came back as <a href="https://www.16personalities.com/profiles/7c275e8db32f5">Mediator</a> (Code: INFP - Role: Diplomat)</p>
+<p>There were difinitely some traits that sounded like me, and a lot of statement I can relate for sure. It’s definitely some fun test to do.</p>
+<p>There was a one part that stated “INFP - compromising just 4% of the population”. This read me to think which traits are more popular than the others, but so far I haven’t found details on population breakdown. Later if I do find population breakdown of personalities trait, then I thought it would be interesting to make the plot proportional to the ratio.</p>
+<p>Anyways, I thought I’d get all 16 personalities and plot them using <a href="https://jokergoo.github.io/circlize_book/book/">circlize</a> package as practice. The documentation on circlize was extremely helpful to get me started!</p>
+<p>Below is the code I wrote for now, so I can remember what I have done in case I want to utilize circlize packages.</p>
+<div id="heres-snippets-of-code-ive-used-to-create-above." class="section level3">
+<h3>Here’s snippets of code I’ve used to create above.</h3>
+<p>First I’ve used package <a href="https://CRAN.R-project.org/package=rvest">rvest</a> to get some data about all 16 personalities.</p>
+<pre class="r"><code>## Get 16 Different Personalities from 16 Personalities Website
+personalities &lt;-read_html(&quot;https://www.16personalities.com/personality-types&quot;)
+
+per.df &lt;- tibble(
+  type = personalities %&gt;% html_nodes(&quot;.type-item h4&quot;) %&gt;% 
+    html_text() %&gt;% gsub(pattern=&quot;(“|”)&quot;,replacement=&quot;&quot;),
+  type.code = personalities %&gt;% html_nodes(&quot;h5&quot;) %&gt;% html_text(),
+  short.descr = personalities %&gt;% html_nodes(&quot;.type-snippet&quot;) %&gt;% html_text(),
+  img = personalities %&gt;% html_nodes(&quot;.type-item img&quot;) %&gt;% html_attr(&quot;src&quot;)
+)
+
+## Add few more details to table.
+per.df &lt;- per.df %&gt;% mutate(type.code=substr(type.code,1,4), mind=substr(type.code,1,1),
+                            energy = substr(type.code,2,2), nature = substr(type.code,3,3),
+                            tactic = substr(type.code,4,4))
+
+## There are 4 &quot;Roles&quot; based on followig rules ## I only really recently discovered case_when statment! 
+### case_when statement is amazing! I&#39;ve been writing crazy nested ifelse statement till very recently.
+per.df &lt;- per.df %&gt;% mutate(roles = case_when(
+  str_detect(.$type.code,&quot;.NT.&quot;) ~ &quot;Analyst&quot;,
+  str_detect(.$type.code,&quot;.NF.&quot;) ~ &quot;Diplomat&quot;,
+  str_detect(.$type.code,&quot;.S.J&quot;) ~ &quot;Sentinels&quot;,
+  str_detect(.$type.code,&quot;.S.P&quot;) ~ &quot;Explorers&quot;
+))</code></pre>
+</div>
+</div>
+<div id="here-comes-exciting-drawing-with-circlize-package" class="section level2">
+<h2>Here comes exciting drawing with circlize package!</h2>
+<pre class="r"><code>circos.clear() 
+circos.par(start.degree=90)
+
+## initialize
+circos.initialize(factor=per.df$type, xlim=c(0,1))
+
+## Layout basic tracks
+circos.track(ylim=c(0,1), 
+             panel.fun = function(x,y){
+               circos.text(x=CELL_META$xcenter, y=CELL_META$ycenter,
+                           labels=CELL_META$sector.index,
+                           facing = &quot;inside&quot;, 
+                           niceFacing= TRUE, font=2)
+             })
+
+## I definitely think there&#39;s better way to write below....  
+## But at the moment, I&#39;m building it section by section...
+highlight.sector(per.df$type[1:4], 
+                 track.index = 1, 
+                 text = per.df$roles[1],
+                 facing = &quot;bending.inside&quot;, niceFacing = TRUE, 
+                 text.vjust = &quot;15mm&quot;, cex = 1.5, col=&quot;#734C5F60&quot;)
+
+highlight.sector(per.df$type[5:8], 
+                 track.index = 1, 
+                 text = per.df$roles[5],
+                 facing = &quot;bending.inside&quot;, niceFacing = TRUE, 
+                 text.vjust = &quot;15mm&quot;, cex = 1.5, col=&quot;#728D5660&quot;)
+
+
+highlight.sector(per.df$type[9:12], 
+                 track.index = 1, 
+                 text = per.df$roles[9],
+                 facing = &quot;bending.inside&quot;, niceFacing = TRUE, 
+                 text.vjust = &quot;15mm&quot;, cex = 1.5, col=&quot;#51A9AB60&quot;)
+
+
+highlight.sector(per.df$type[13:16], 
+                 track.index = 1, 
+                 text = per.df$roles[13],
+                 facing = &quot;bending.inside&quot;, niceFacing = TRUE, 
+                 text.vjust = &quot;15mm&quot;, cex = 1.5, col=&quot;#E5C82E60&quot;)
+
+###  Now the inner track.  I want to place images.
+circos.track(ylim=c(0,1), 
+             panel.fun = function(x,y){
+               circos.raster(image=image_read(per.df$img[CELL_META$sector.numeric.index]),
+                             x=CELL_META$xcenter, y=CELL_META$ycenter, 
+                             width=&quot;2.5cm&quot;, facing = &quot;inside&quot;, niceFacing=TRUE)
+             },bg.border = NA, track.height=0.3)
+
+## Place another track with type code.
+circos.track(ylim=c(0,1), 
+             panel.fun = function(x,y){
+               circos.text(x=CELL_META$xcenter, y=CELL_META$ycenter,
+                           labels=per.df$type.code[CELL_META$sector.numeric.index],
+                           facing = &quot;inside&quot;, 
+                           niceFacing= TRUE)
+             },bg.border = NA , track.height=0.15)</code></pre>
+<p><img src="/post/2018-05-20-16-personalities-with-circizle_files/figure-html/fun_stuff-1.png" width="864" /></p>
+</div>

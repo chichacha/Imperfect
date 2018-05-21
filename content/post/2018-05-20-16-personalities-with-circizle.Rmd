@@ -1,0 +1,140 @@
+---
+title: '16 Personalities with Circlize '
+author: Chisato
+date: '2018-05-20'
+slug: 16-personalities-with-circizle
+categories:
+  - R
+tags:
+  - circlize
+description: '16 Personalities displayed in circle with circlize package'
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+## 16 Personalities
+
+While back, my husband introduced me to this fun online personalities test called [16 personalities](https://www.16personalities.com/). I've taken the test, and my personalities type came back as [Mediator](https://www.16personalities.com/profiles/7c275e8db32f5) (Code: INFP - Role: Diplomat)
+
+There were difinitely some traits that sounded like me, and a lot of statement I can relate for sure.  It's definitely some fun test to do. 
+
+There was a one part that stated "INFP - compromising just 4% of the population".  This read me to think which traits are more popular than the others, but so far I haven't found details on population breakdown. Later if I do find population breakdown of personalities trait, then I thought it would be interesting to make the plot proportional to the ratio.     
+
+Anyways, I thought I'd get all 16 personalities and plot them using [circlize](https://jokergoo.github.io/circlize_book/book/) package as practice.   The documentation on circlize was extremely helpful to get me started! 
+
+Below is the code I wrote for now, so I can remember what I have done in case I want to utilize circlize packages.  
+
+
+```{r setup, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+
+library(rvest)  ## to get data from website
+library(stringr)
+library(tidyverse)
+library(circlize)
+library(magick)  ## for image 
+
+```
+
+### Here's snippets of code I've used to create above.
+
+First I've used package [rvest](https://CRAN.R-project.org/package=rvest) to get some data about all 16 personalities. 
+
+```{r personalities, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+## Get 16 Different Personalities from 16 Personalities Website
+personalities <-read_html("https://www.16personalities.com/personality-types")
+
+per.df <- tibble(
+  type = personalities %>% html_nodes(".type-item h4") %>% 
+    html_text() %>% gsub(pattern="(“|”)",replacement=""),
+  type.code = personalities %>% html_nodes("h5") %>% html_text(),
+  short.descr = personalities %>% html_nodes(".type-snippet") %>% html_text(),
+  img = personalities %>% html_nodes(".type-item img") %>% html_attr("src")
+)
+
+## Add few more details to table.
+per.df <- per.df %>% mutate(type.code=substr(type.code,1,4), mind=substr(type.code,1,1),
+                            energy = substr(type.code,2,2), nature = substr(type.code,3,3),
+                            tactic = substr(type.code,4,4))
+
+## There are 4 "Roles" based on followig rules ## I only really recently discovered case_when statment! 
+### case_when statement is amazing! I've been writing crazy nested ifelse statement till very recently.
+per.df <- per.df %>% mutate(roles = case_when(
+  str_detect(.$type.code,".NT.") ~ "Analyst",
+  str_detect(.$type.code,".NF.") ~ "Diplomat",
+  str_detect(.$type.code,".S.J") ~ "Sentinels",
+  str_detect(.$type.code,".S.P") ~ "Explorers"
+))
+
+```
+
+## Here comes exciting drawing with circlize package! 
+
+
+```{r fun_stuff, echo=TRUE, fig.height=9, fig.width=9, warning=FALSE, paged.print=FALSE}
+
+circos.clear() 
+circos.par(start.degree=90)
+
+## initialize
+circos.initialize(factor=per.df$type, xlim=c(0,1))
+
+## Layout basic tracks
+circos.track(ylim=c(0,1), 
+             panel.fun = function(x,y){
+               circos.text(x=CELL_META$xcenter, y=CELL_META$ycenter,
+                           labels=CELL_META$sector.index,
+                           facing = "inside", 
+                           niceFacing= TRUE, font=2)
+             })
+
+## I definitely think there's better way to write below....  
+## But at the moment, I'm building it section by section...
+highlight.sector(per.df$type[1:4], 
+                 track.index = 1, 
+                 text = per.df$roles[1],
+                 facing = "bending.inside", niceFacing = TRUE, 
+                 text.vjust = "15mm", cex = 1.5, col="#734C5F60")
+
+highlight.sector(per.df$type[5:8], 
+                 track.index = 1, 
+                 text = per.df$roles[5],
+                 facing = "bending.inside", niceFacing = TRUE, 
+                 text.vjust = "15mm", cex = 1.5, col="#728D5660")
+
+
+highlight.sector(per.df$type[9:12], 
+                 track.index = 1, 
+                 text = per.df$roles[9],
+                 facing = "bending.inside", niceFacing = TRUE, 
+                 text.vjust = "15mm", cex = 1.5, col="#51A9AB60")
+
+
+highlight.sector(per.df$type[13:16], 
+                 track.index = 1, 
+                 text = per.df$roles[13],
+                 facing = "bending.inside", niceFacing = TRUE, 
+                 text.vjust = "15mm", cex = 1.5, col="#E5C82E60")
+
+###  Now the inner track.  I want to place images.
+circos.track(ylim=c(0,1), 
+             panel.fun = function(x,y){
+               circos.raster(image=image_read(per.df$img[CELL_META$sector.numeric.index]),
+                             x=CELL_META$xcenter, y=CELL_META$ycenter, 
+                             width="2.5cm", facing = "inside", niceFacing=TRUE)
+             },bg.border = NA, track.height=0.3)
+
+## Place another track with type code.
+circos.track(ylim=c(0,1), 
+             panel.fun = function(x,y){
+               circos.text(x=CELL_META$xcenter, y=CELL_META$ycenter,
+                           labels=per.df$type.code[CELL_META$sector.numeric.index],
+                           facing = "inside", 
+                           niceFacing= TRUE)
+             },bg.border = NA , track.height=0.15)
+
+
+```
+

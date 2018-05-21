@@ -93,7 +93,7 @@ post = "/:year/:month/:day/:slug/"
   # These are optional params related to the sidebar. They are recommended, but not
   # required for proper functionality. HTML is supported within the params.
 [params.intro]
-  header    = "Just [R]ambling Away"
+  header    = "Just [R]ambling"
   paragraph = "Totally expe[r]imental<i class='fa fa-hand-peace-o'></i>"
   about     = ""
 
