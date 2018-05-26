@@ -1,0 +1,192 @@
+---
+title: Making Calendar with ggplot + Moon Phase Calendar for fun
+author: Chisato
+date: '2018-05-26'
+slug: making-calendar-with-ggplot-moon-phase-calendar
+categories:
+  - R
+tags:
+  - ggplot2
+  - suncalc
+  - lubridate
+description: 'Making calendar using ggplot2 + using Moon Phase font'
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+output: 
+  html_document: 
+    fig_height: 11
+    fig_width: 9
+---
+
+
+
+<div id="making-calendar-with-ggplot2" class="section level2">
+<h2>Making Calendar with ggplot2</h2>
+<p>I recently discovered font called <a href="https://www.dafont.com/moon-phases.font">Moon Phase</a>. I also recently discovered R package, <a href="https://CRAN.R-project.org/package=suncalc">suncalc</a>, and I can get Moon Illumination data by day, so I thought I’d use both to create a simple calendar using <a href="http://ggplot2.tidyverse.org/">ggplot2</a>.</p>
+<div id="prepping-the-data" class="section level3">
+<h3>Prepping The Data</h3>
+<p>To make calendar, I need to strip out weekday, month, day, week number within a month. So I can use weekday as x-axis, week number within a month as y-axis, and facet by month.</p>
+<pre class="r"><code>## use getMoonIllusmination function to get moon fraction, phase, and angle for 2018.
+Moon_2018 &lt;-getMoonIllumination(date = seq.Date(as.Date(&quot;2018-01-01&quot;), as.Date(&quot;2018-12-31&quot;), by = 1), 
+                                 keep = c(&quot;fraction&quot;, &quot;phase&quot;, &quot;angle&quot;))
+
+moon.font &lt;- c(0, LETTERS[1:13], 1, LETTERS[14:26])  ## 0 is New Moon then use A to N, 1 is Full Moon, then use M to Z
+
+## Append Extra Info, so I can use ggplot to make calendar. 
+Moon_2018_df &lt;- Moon_2018 %&gt;% 
+  mutate(wkdy = fct_inorder(weekdays(date, abbreviate=T)), ## 2018 worked well because it starts on Monday
+         wkn = week(date), ## Week Number
+         mo = month(date, label=T, abbr=T), ## Month
+         day = day(date), ## Day
+         moon.phase = cut(phase,breaks=seq(0,1,by=1/28), ## I want to assign
+                          ordered_result=T, 
+                          labels=moon.font,right=F)) %&gt;%
+  group_by(mo) %&gt;% 
+  mutate(wkn.mo = dense_rank(wkn)) %&gt;%
+  ungroup()
+
+## Show the data around today to see what data above looks like.
+Moon_2018_df %&gt;% filter(between(date,today()-3,today()+3)) %&gt;% kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">date</th>
+<th align="right">fraction</th>
+<th align="right">phase</th>
+<th align="right">angle</th>
+<th align="left">wkdy</th>
+<th align="right">wkn</th>
+<th align="left">mo</th>
+<th align="right">day</th>
+<th align="left">moon.phase</th>
+<th align="right">wkn.mo</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2018-05-23</td>
+<td align="right">0.5928637</td>
+<td align="right">0.2797321</td>
+<td align="right">-1.1692842</td>
+<td align="left">Wed</td>
+<td align="right">21</td>
+<td align="left">May</td>
+<td align="right">23</td>
+<td align="left">G</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="left">2018-05-24</td>
+<td align="right">0.7013470</td>
+<td align="right">0.3159631</td>
+<td align="right">-1.1353234</td>
+<td align="left">Thu</td>
+<td align="right">21</td>
+<td align="left">May</td>
+<td align="right">24</td>
+<td align="left">H</td>
+<td align="right">4</td>
+</tr>
+<tr class="odd">
+<td align="left">2018-05-25</td>
+<td align="right">0.7972031</td>
+<td align="right">0.3513064</td>
+<td align="right">-1.1143088</td>
+<td align="left">Fri</td>
+<td align="right">21</td>
+<td align="left">May</td>
+<td align="right">25</td>
+<td align="left">I</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="left">2018-05-26</td>
+<td align="right">0.8764075</td>
+<td align="right">0.3856523</td>
+<td align="right">-1.1008454</td>
+<td align="left">Sat</td>
+<td align="right">21</td>
+<td align="left">May</td>
+<td align="right">26</td>
+<td align="left">J</td>
+<td align="right">4</td>
+</tr>
+<tr class="odd">
+<td align="left">2018-05-27</td>
+<td align="right">0.9364869</td>
+<td align="right">0.4189058</td>
+<td align="right">-1.0823715</td>
+<td align="left">Sun</td>
+<td align="right">21</td>
+<td align="left">May</td>
+<td align="right">27</td>
+<td align="left">K</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="left">2018-05-28</td>
+<td align="right">0.9763419</td>
+<td align="right">0.4508451</td>
+<td align="right">-1.0183864</td>
+<td align="left">Mon</td>
+<td align="right">22</td>
+<td align="left">May</td>
+<td align="right">28</td>
+<td align="left">L</td>
+<td align="right">5</td>
+</tr>
+<tr class="odd">
+<td align="left">2018-05-29</td>
+<td align="right">0.9959399</td>
+<td align="right">0.4797038</td>
+<td align="right">-0.6465735</td>
+<td align="left">Tue</td>
+<td align="right">22</td>
+<td align="left">May</td>
+<td align="right">29</td>
+<td align="left">M</td>
+<td align="right">5</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="just-simple-calendar" class="section level2">
+<h2>Just Simple Calendar</h2>
+<p>First I just made simple calendar with below code.</p>
+<pre class="r"><code>##  Here&#39;s Just Calendar Part
+Moon_2018_df %&gt;% ggplot(aes(x=wkdy, y=wkn.mo)) + 
+  geom_point(alpha=0.3, aes(color=wkdy), size=8) + 
+  geom_text(aes(label=day),family=&quot;Roboto Condensed&quot;) +
+  facet_wrap(~mo, scales=&quot;free_x&quot;, ncol=3) +  ## So that Each Line is Quarter!
+  scale_x_discrete() +
+  scale_y_reverse(breaks=NULL) +
+  scale_colour_viridis_d(guide=&quot;none&quot;) +
+  theme_ipsum_rc() +
+  labs(title=&quot;2018&quot;, x=&quot;Start of week is Monday&quot;, y=&quot;&quot;) +
+  expand_limits(y=c(0.5,6.5)) </code></pre>
+<p><img src="/post/2018-05-26-making-calendar-with-ggplot-moon-phase-calendar_files/figure-html/simple_calendar-1.png" width="1056" /></p>
+</div>
+<div id="moon-phase-calendar" class="section level2">
+<h2>Moon Phase Calendar</h2>
+<p>This time, I tried using geom_tile function to create tiles. I’ve coloured sell using fraction (illuminated fraction of the moon). 0 is New Moon, and 1 is Full Moon. When it’s Full moon sky is lighter, so I’ve coloured cell little bit lighter.</p>
+<pre class="r"><code>Moon_2018_df %&gt;% ggplot(aes(x=wkdy, y=wkn.mo)) + 
+  geom_tile(alpha=0.8, aes(fill=fraction)) + 
+  geom_text(aes(label=paste0(&quot; &quot;,day)),size=3,family=&quot;Roboto Condensed&quot;,hjust=0, color=&quot;white&quot;) +
+  geom_text(aes(label=moon.phase), family=&quot;Moon Phases&quot;, hjust=1, color=&quot;white&quot;, size=5) +
+  facet_wrap(~mo, scales=&quot;free_x&quot;, ncol=3) +  ## So that Each Line is Quarter!
+  scale_x_discrete() +
+  scale_y_reverse(breaks=NULL) +
+  scale_fill_viridis_c(name=&quot;Moon Illumination&quot;, option=&quot;inferno&quot;,  begin=0.2, end=0, guide=&quot;none&quot;) +  ## so that sky is darkest when there&#39;s new moon
+  theme_ipsum_rc() +
+  labs(title=&quot;2018 Moon Phase Calendar&quot;, x=&quot;Start of week is Monday&quot;, y=&quot;&quot;) +
+  expand_limits(y=c(0.5,6.5)) +
+  theme(legend.position=&quot;top&quot;)</code></pre>
+<p><img src="/post/2018-05-26-making-calendar-with-ggplot-moon-phase-calendar_files/figure-html/moon_phase_calendar-1.png" width="1056" /></p>
+<div id="problem" class="section level3">
+<h3>Problem…</h3>
+<p>However after creating the above, I realized Full Moon dates and fonts are NOT exactly aligned…. I guess I’d probably need to do better way to asign phase value to the font…</p>
+</div>
+</div>

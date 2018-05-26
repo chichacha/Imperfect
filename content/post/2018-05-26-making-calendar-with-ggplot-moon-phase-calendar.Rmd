@@ -1,0 +1,120 @@
+---
+title: Making Calendar with ggplot + Moon Phase Calendar for fun
+author: Chisato
+date: '2018-05-26'
+slug: making-calendar-with-ggplot-moon-phase-calendar
+categories:
+  - R
+tags:
+  - ggplot2
+  - suncalc
+  - lubridate
+description: 'Making calendar using ggplot2 + using Moon Phase font'
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+output: 
+  html_document: 
+    fig_height: 11
+    fig_width: 9
+---
+
+## Making Calendar with ggplot2
+
+I recently discovered font called [Moon Phase](https://www.dafont.com/moon-phases.font).
+I also recently discovered R package, [suncalc](https://CRAN.R-project.org/package=suncalc), and I can get Moon Illumination data by day, so I thought I'd use both to create a simple calendar using [ggplot2](http://ggplot2.tidyverse.org/).
+
+
+
+```{r package_setup, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+
+library(tidyverse) 
+library(suncalc)  ## https://CRAN.R-project.org/package=suncalc
+library(scales) ## So I can use date_breaks etc on chart
+library(lubridate) ## for dealing with time!
+library(hrbrthemes)  ## I love this themes for ggplot! 
+library(knitr)
+library(kableExtra)
+library(DT)
+
+```
+
+
+### Prepping The Data
+
+To make calendar, I need to strip out weekday, month, day, week number within a month. So I can use weekday as x-axis, week number within a month as y-axis, and facet by month. 
+
+```{r calendar_dataprep, echo=TRUE, message=FALSE, warning=FALSE}
+## use getMoonIllusmination function to get moon fraction, phase, and angle for 2018.
+Moon_2018 <-getMoonIllumination(date = seq.Date(as.Date("2018-01-01"), as.Date("2018-12-31"), by = 1), 
+                                 keep = c("fraction", "phase", "angle"))
+
+moon.font <- c(0, LETTERS[1:13], 1, LETTERS[14:26])  ## 0 is New Moon then use A to N, 1 is Full Moon, then use M to Z
+
+## Append Extra Info, so I can use ggplot to make calendar. 
+Moon_2018_df <- Moon_2018 %>% 
+  mutate(wkdy = fct_inorder(weekdays(date, abbreviate=T)), ## 2018 worked well because it starts on Monday
+         wkn = week(date), ## Week Number
+         mo = month(date, label=T, abbr=T), ## Month
+         day = day(date), ## Day
+         moon.phase = cut(phase,breaks=seq(0,1,by=1/28), ## I want to assign
+                          ordered_result=T, 
+                          labels=moon.font,right=F)) %>%
+  group_by(mo) %>% 
+  mutate(wkn.mo = dense_rank(wkn)) %>%
+  ungroup()
+
+## Show the data around today to see what data above looks like.
+Moon_2018_df %>% filter(between(date,today()-3,today()+3)) %>% kable()
+
+```
+
+## Just Simple Calendar
+
+First I just made simple calendar with below code.
+
+```{r simple_calendar, fig.height=15, fig.width=11, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+##  Here's Just Calendar Part
+Moon_2018_df %>% ggplot(aes(x=wkdy, y=wkn.mo)) + 
+  geom_point(alpha=0.3, aes(color=wkdy), size=8) + 
+  geom_text(aes(label=day),family="Roboto Condensed") +
+  facet_wrap(~mo, scales="free_x", ncol=3) +  ## So that Each Line is Quarter!
+  scale_x_discrete() +
+  scale_y_reverse(breaks=NULL) +
+  scale_colour_viridis_d(guide="none") +
+  theme_ipsum_rc() +
+  labs(title="2018", x="Start of week is Monday", y="") +
+  expand_limits(y=c(0.5,6.5)) 
+
+
+```
+
+## Moon Phase Calendar
+
+This time, I tried using geom_tile function to create tiles.   I've coloured sell using fraction (illuminated fraction of the moon). 0 is New Moon, and 1 is Full Moon.  When it's Full moon sky is lighter, so I've coloured cell little bit lighter. 
+
+```{r moon_phase_calendar, fig.height=15, fig.width=11, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+Moon_2018_df %>% ggplot(aes(x=wkdy, y=wkn.mo)) + 
+  geom_tile(alpha=0.8, aes(fill=fraction)) + 
+  geom_text(aes(label=paste0(" ",day)),size=3,family="Roboto Condensed",hjust=0, color="white") +
+  geom_text(aes(label=moon.phase), family="Moon Phases", hjust=1, color="white", size=5) +
+  facet_wrap(~mo, scales="free_x", ncol=3) +  ## So that Each Line is Quarter!
+  scale_x_discrete() +
+  scale_y_reverse(breaks=NULL) +
+  scale_fill_viridis_c(name="Moon Illumination", option="inferno",  begin=0.2, end=0, guide="none") +  ## so that sky is darkest when there's new moon
+  theme_ipsum_rc() +
+  labs(title="2018 Moon Phase Calendar", x="Start of week is Monday", y="") +
+  expand_limits(y=c(0.5,6.5)) +
+  theme(legend.position="top")
+
+```
+
+
+### Problem...
+
+However after creating the above, I realized Full Moon dates and fonts are NOT exactly aligned....
+I guess I'd probably need to do better way to asign phase value to the font... 
+
