@@ -32,7 +32,6 @@ output:
 Moon_2018 &lt;-getMoonIllumination(date = seq.Date(as.Date(&quot;2018-01-01&quot;), as.Date(&quot;2018-12-31&quot;), by = 1), 
                                  keep = c(&quot;fraction&quot;, &quot;phase&quot;, &quot;angle&quot;))
 
-moon.font &lt;- c(0, LETTERS[1:13], 1, LETTERS[14:26])  ## 0 is New Moon then use A to N, 1 is Full Moon, then use M to Z
 
 ## Append Extra Info, so I can use ggplot to make calendar. 
 Moon_2018_df &lt;- Moon_2018 %&gt;% 
@@ -40,12 +39,20 @@ Moon_2018_df &lt;- Moon_2018 %&gt;%
          wkn = week(date), ## Week Number
          mo = month(date, label=T, abbr=T), ## Month
          day = day(date), ## Day
-         moon.phase = cut(phase,breaks=seq(0,1,by=1/28), ## I want to assign
-                          ordered_result=T, 
-                          labels=moon.font,right=F)) %&gt;%
+         moon.phase = cut(#phase,breaks=seq(0,1,by=1/28), ## this doesn&#39;t work...
+                          phase,breaks=seq(0,1,by=1/56),
+                          ordered_result=T)) %&gt;%
   group_by(mo) %&gt;% 
   mutate(wkn.mo = dense_rank(wkn)) %&gt;%
   ungroup()
+
+## Simply cutting into 28 blocks didn&#39;t work out..  
+moon.font.tb &lt;- tibble(
+  moon.font = c(NA, letters[rep(1:13,rep(2,13))], 0,0, letters[rep(14:26,rep(2,13))],NA),
+  moon.phase = levels(Moon_2018_df$moon.phase)
+)
+
+Moon_2018_df &lt;- Moon_2018_df %&gt;% left_join(moon.font.tb)
 
 ## Show the data around today to see what data above looks like.
 Moon_2018_df %&gt;% filter(between(date,today()-3,today()+3)) %&gt;% kable()</code></pre>
@@ -62,6 +69,7 @@ Moon_2018_df %&gt;% filter(between(date,today()-3,today()+3)) %&gt;% kable()</co
 <th align="right">day</th>
 <th align="left">moon.phase</th>
 <th align="right">wkn.mo</th>
+<th align="left">moon.font</th>
 </tr>
 </thead>
 <tbody>
@@ -74,8 +82,9 @@ Moon_2018_df %&gt;% filter(between(date,today()-3,today()+3)) %&gt;% kable()</co
 <td align="right">21</td>
 <td align="left">May</td>
 <td align="right">23</td>
-<td align="left">G</td>
+<td align="left">(0.268,0.286]</td>
 <td align="right">4</td>
+<td align="left">h</td>
 </tr>
 <tr class="even">
 <td align="left">2018-05-24</td>
@@ -86,8 +95,9 @@ Moon_2018_df %&gt;% filter(between(date,today()-3,today()+3)) %&gt;% kable()</co
 <td align="right">21</td>
 <td align="left">May</td>
 <td align="right">24</td>
-<td align="left">H</td>
+<td align="left">(0.304,0.321]</td>
 <td align="right">4</td>
+<td align="left">i</td>
 </tr>
 <tr class="odd">
 <td align="left">2018-05-25</td>
@@ -98,8 +108,9 @@ Moon_2018_df %&gt;% filter(between(date,today()-3,today()+3)) %&gt;% kable()</co
 <td align="right">21</td>
 <td align="left">May</td>
 <td align="right">25</td>
-<td align="left">I</td>
+<td align="left">(0.339,0.357]</td>
 <td align="right">4</td>
+<td align="left">j</td>
 </tr>
 <tr class="even">
 <td align="left">2018-05-26</td>
@@ -110,8 +121,9 @@ Moon_2018_df %&gt;% filter(between(date,today()-3,today()+3)) %&gt;% kable()</co
 <td align="right">21</td>
 <td align="left">May</td>
 <td align="right">26</td>
-<td align="left">J</td>
+<td align="left">(0.375,0.393]</td>
 <td align="right">4</td>
+<td align="left">k</td>
 </tr>
 <tr class="odd">
 <td align="left">2018-05-27</td>
@@ -122,8 +134,9 @@ Moon_2018_df %&gt;% filter(between(date,today()-3,today()+3)) %&gt;% kable()</co
 <td align="right">21</td>
 <td align="left">May</td>
 <td align="right">27</td>
-<td align="left">K</td>
+<td align="left">(0.411,0.429]</td>
 <td align="right">4</td>
+<td align="left">l</td>
 </tr>
 <tr class="even">
 <td align="left">2018-05-28</td>
@@ -134,8 +147,9 @@ Moon_2018_df %&gt;% filter(between(date,today()-3,today()+3)) %&gt;% kable()</co
 <td align="right">22</td>
 <td align="left">May</td>
 <td align="right">28</td>
-<td align="left">L</td>
+<td align="left">(0.446,0.464]</td>
 <td align="right">5</td>
+<td align="left">m</td>
 </tr>
 <tr class="odd">
 <td align="left">2018-05-29</td>
@@ -146,8 +160,9 @@ Moon_2018_df %&gt;% filter(between(date,today()-3,today()+3)) %&gt;% kable()</co
 <td align="right">22</td>
 <td align="left">May</td>
 <td align="right">29</td>
-<td align="left">M</td>
+<td align="left">(0.464,0.482]</td>
 <td align="right">5</td>
+<td align="left">m</td>
 </tr>
 </tbody>
 </table>
@@ -175,18 +190,27 @@ Moon_2018_df %&gt;% ggplot(aes(x=wkdy, y=wkn.mo)) +
 <pre class="r"><code>Moon_2018_df %&gt;% ggplot(aes(x=wkdy, y=wkn.mo)) + 
   geom_tile(alpha=0.8, aes(fill=fraction)) + 
   geom_text(aes(label=paste0(&quot; &quot;,day)),size=3,family=&quot;Roboto Condensed&quot;,hjust=0, color=&quot;white&quot;) +
-  geom_text(aes(label=moon.phase), family=&quot;Moon Phases&quot;, hjust=1, color=&quot;white&quot;, size=5) +
+  geom_text(aes(label=moon.font), family=&quot;Moon Phases&quot;, hjust=1, color=&quot;white&quot;, size=5) +
   facet_wrap(~mo, scales=&quot;free_x&quot;, ncol=3) +  ## So that Each Line is Quarter!
   scale_x_discrete() +
   scale_y_reverse(breaks=NULL) +
-  scale_fill_viridis_c(name=&quot;Moon Illumination&quot;, option=&quot;inferno&quot;,  begin=0.2, end=0, guide=&quot;none&quot;) +  ## so that sky is darkest when there&#39;s new moon
+  scale_fill_viridis_c(name=&quot;Moon Illumination&quot;, option=&quot;inferno&quot;,  begin=0, end=0.25, guide=&quot;none&quot;) +  ## so that sky is darkest when there&#39;s new moon
   theme_ipsum_rc() +
   labs(title=&quot;2018 Moon Phase Calendar&quot;, x=&quot;Start of week is Monday&quot;, y=&quot;&quot;) +
   expand_limits(y=c(0.5,6.5)) +
   theme(legend.position=&quot;top&quot;)</code></pre>
 <p><img src="/post/2018-05-26-making-calendar-with-ggplot-moon-phase-calendar_files/figure-html/moon_phase_calendar-1.png" width="1056" /></p>
-<div id="problem" class="section level3">
-<h3>Problem…</h3>
-<p>However after creating the above, I realized Full Moon dates and fonts are NOT exactly aligned…. I guess I’d probably need to do better way to asign phase value to the font…</p>
 </div>
+<div id="yet-another-calendar" class="section level2">
+<h2>Yet Another Calendar</h2>
+<pre class="r"><code>Moon_2018_df %&gt;% 
+  ggplot(aes(x=day, y=fct_rev(mo))) + 
+  theme_minimal(base_family=&quot;Roboto Condensed&quot;) + 
+  scale_x_continuous(breaks=c(1:31), position=&quot;top&quot;) +
+  geom_text(aes(label=moon.font, color=fraction),family=&quot;Moon Phases&quot;, hjust=0.5, vjust=0.5, size=8, alpha=0.5) +
+  geom_text(aes(label=paste0(day,&quot;\n&quot;,wkdy)), family=&quot;Roboto Condensed&quot;, lineheight=0.8, size=4) + 
+  labs(x=&quot;&quot;, y=&quot;&quot;, title=&quot;Another Type of Calendar&quot;) +
+  scale_color_viridis_c()+
+  theme(legend.position=&quot;bottom&quot;)</code></pre>
+<p><img src="/post/2018-05-26-making-calendar-with-ggplot-moon-phase-calendar_files/figure-html/moon_phase_calender2-1.png" width="1056" /></p>
 </div>
