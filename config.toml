@@ -14,6 +14,8 @@ enableEmoji =  true
 
 ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
 
+rssLimit = 20
+
 [permalinks]
 post = "/:year/:month/:day/:slug/"
 
