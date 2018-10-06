@@ -188,7 +188,7 @@ post = "/:year/:month/:day/:slug/"
     # WeChat and QQ need testing.
     wechat         = ""
     qq             = "" # User ID Number
-  instagram        = "chichacha"
+  instagram        = ""
   tumblr           = ""
   twitter          = "chisatini"
   skype            = ""
