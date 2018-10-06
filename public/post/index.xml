@@ -6,10 +6,41 @@
     <description>Recent content in Posts on Chi&#39;s Impe[r]fect Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 19 May 2018 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 26 May 2018 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Making Calendar with ggplot &#43; Moon Phase Calendar for fun</title>
+      <link>/2018/05/26/making-calendar-with-ggplot-moon-phase-calendar/</link>
+      <pubDate>Sat, 26 May 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/2018/05/26/making-calendar-with-ggplot-moon-phase-calendar/</guid>
+      <description>Making Calendar with ggplot2 I recently discovered font called Moon Phase. I also recently discovered R package, suncalc, and I can get Moon Illumination data by day, so I thought I’d use both to create a simple calendar using ggplot2.
+Prepping The Data To make calendar, I need to strip out weekday, month, day, week number within a month. So I can use weekday as x-axis, week number within a month as y-axis, and facet by month.</description>
+    </item>
+    
+    <item>
+      <title>16 Personalities with Circlize </title>
+      <link>/2018/05/20/16-personalities-with-circizle/</link>
+      <pubDate>Sun, 20 May 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/2018/05/20/16-personalities-with-circizle/</guid>
+      <description>16 Personalities While back, my husband introduced me to this fun online personalities test called 16 personalities. I’ve taken the test, and my personalities type came back as Mediator (Code: INFP - Role: Diplomat)
+There were difinitely some traits that sounded like me, and a lot of statement I can relate for sure. It’s definitely some fun test to do.
+There was a one part that stated “INFP - compromising just 4% of the population”.</description>
+    </item>
+    
+    <item>
+      <title>Daylight in Vancouver (Canada) vs Tokyo (Japan)</title>
+      <link>/2018/05/20/daylight-time-in-vancouver-canada-vs-tokyo-japan/</link>
+      <pubDate>Sun, 20 May 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/2018/05/20/daylight-time-in-vancouver-canada-vs-tokyo-japan/</guid>
+      <description>I currently live in British Columbia, Canada. So I live above 49th parallel line. One of things that’s pretty awesome living up north is the fact you get so much longer daylights in summer time! Currently it’s May, and I’m just in love with longer daylight we are getting day by day (well till June 21st)!
+Recently I came across R package called suncalc, so I had to try out using the package to pull the timetable for sunrise &amp;amp; sunset for different locations and visualize the result using ggplot2.</description>
+    </item>
     
     <item>
       <title>Testing Entry with R Rmarkdown File</title>
@@ -17,7 +48,7 @@
       <pubDate>Sat, 19 May 2018 00:00:00 +0000</pubDate>
       
       <guid>/2018/05/19/testing-entry-with-r-rmarkdown-file/</guid>
-      <description>Hello! World! Just figuring out how the blog post works with this random set of coffee data.
+      <description>Hello! World! Just figuring out how the blog post works with this random set of coffee data!
  Espresso Drinks Visualized with ggplot2 Pie Chart Pie chart can be created with using polar coordinate.
 ## Pie Chart coffee_long %&amp;gt;% ggplot() + geom_bar(aes(x=sqrt(total.amount)/2, y = amount, fill=fct_rev(ingredient.f), width=sqrt(total.amount)), stat=&amp;quot;identity&amp;quot;, position=&amp;quot;fill&amp;quot;) + facet_wrap(~name2, ncol=4) + geom_text(aes(x=sqrt(total.amount), y=Inf, label=&amp;quot;&amp;quot;), size=7) + theme_void(base_family=&amp;quot;Roboto Condensed&amp;quot;) + coord_polar(theta=&amp;quot;y&amp;quot;) + scale_fill_hue(name=&amp;quot;Ingredient&amp;quot;, l=80) + theme(legend.position=&amp;quot;top&amp;quot;)  Espresso Drinks Visualized with ggplot2 Bar Chart ## Bar Chart coffee_long %&amp;gt;% ggplot() + geom_bar(aes(x=3, y = amount, fill=fct_rev(ingredient.</description>
     </item>
