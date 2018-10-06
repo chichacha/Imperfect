@@ -1,0 +1,208 @@
+---
+title: Environmental Performance Index - Simple Scatter Plot
+author: Chisato
+date: '2018-10-05'
+slug: environmental-performance-index-simple-scatter-plot
+categories:
+  - R
+tags:
+  - ggplot2
+  - rvest
+description: ''
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+
+
+<p>While reading the news that <a href="https://www.theguardian.com/environment/2018/jul/12/ireland-becomes-worlds-first-country-to-divest-from-fossil-fuels">Ireland becomes world’s first country to divest from fossil fuels</a>, I just got curious how do we measure “green-ness” of country when we rank them in general, and I came across the <a href="https://epi.envirocenter.yale.edu/epi-topline">Environmental Performance Index</a> page with ranking table.</p>
+<p>Table contained 180 countries with some numerics values for Environment Performance Index, “Enviornmental Health”, “Ecosystem Vitality”.</p>
+<p>I thought it would be interesting to plot them using ggplot2.</p>
+<p>First I needed to get data, so I’ve used <a href="https://github.com/hadley/rvest">rvest</a> and scaraped data from website into data frame.</p>
+<pre class="r"><code>library(tidyverse)
+library(knitr)
+library(rvest)
+
+epi_2018_site &lt;- read_html(&quot;https://epi.envirocenter.yale.edu/epi-topline&quot;)
+epi_2018_df &lt;- epi_2018_site %&gt;%
+  html_table() %&gt;% as.data.frame()
+
+
+## Which Countries are the top 5 countries 
+epi_2018_df %&gt;% arrange(EPI.Ranking) %&gt;% head(n=5) %&gt;% kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Country</th>
+<th align="right">EPI.Ranking</th>
+<th align="right">Environmental.Performance.Index</th>
+<th align="right">Environmental.Health</th>
+<th align="right">Ecosystem.Vitality</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Switzerland</td>
+<td align="right">1</td>
+<td align="right">87.42</td>
+<td align="right">93.57</td>
+<td align="right">83.32</td>
+</tr>
+<tr class="even">
+<td align="left">France</td>
+<td align="right">2</td>
+<td align="right">83.95</td>
+<td align="right">95.71</td>
+<td align="right">76.11</td>
+</tr>
+<tr class="odd">
+<td align="left">Denmark</td>
+<td align="right">3</td>
+<td align="right">81.60</td>
+<td align="right">98.20</td>
+<td align="right">70.53</td>
+</tr>
+<tr class="even">
+<td align="left">Malta</td>
+<td align="right">4</td>
+<td align="right">80.90</td>
+<td align="right">93.80</td>
+<td align="right">72.30</td>
+</tr>
+<tr class="odd">
+<td align="left">Sweden</td>
+<td align="right">5</td>
+<td align="right">80.51</td>
+<td align="right">94.41</td>
+<td align="right">71.24</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>## Which Countries are the bottom 5?
+epi_2018_df %&gt;% arrange(EPI.Ranking) %&gt;% tail(n=5) %&gt;% kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th align="left">Country</th>
+<th align="right">EPI.Ranking</th>
+<th align="right">Environmental.Performance.Index</th>
+<th align="right">Environmental.Health</th>
+<th align="right">Ecosystem.Vitality</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>176</td>
+<td align="left">Nepal</td>
+<td align="right">176</td>
+<td align="right">31.44</td>
+<td align="right">10.54</td>
+<td align="right">45.38</td>
+</tr>
+<tr class="even">
+<td>177</td>
+<td align="left">India</td>
+<td align="right">177</td>
+<td align="right">30.57</td>
+<td align="right">9.32</td>
+<td align="right">44.74</td>
+</tr>
+<tr class="odd">
+<td>178</td>
+<td align="left">Dem. Rep. Congo</td>
+<td align="right">178</td>
+<td align="right">30.41</td>
+<td align="right">19.70</td>
+<td align="right">37.56</td>
+</tr>
+<tr class="even">
+<td>179</td>
+<td align="left">Bangladesh</td>
+<td align="right">179</td>
+<td align="right">29.56</td>
+<td align="right">11.96</td>
+<td align="right">41.29</td>
+</tr>
+<tr class="odd">
+<td>180</td>
+<td align="left">Burundi</td>
+<td align="right">180</td>
+<td align="right">27.43</td>
+<td align="right">25.69</td>
+<td align="right">28.59</td>
+</tr>
+</tbody>
+</table>
+<p>So when it comes to ranking in 2018, Top 5 countries are 1. Switzlerland, 2. France, 3. Denmark, 4. Malta, 5. Sweden. Bottom 5 countries for 2018 are , 180. Burundi, 179. Bangladesh, 178. Dem. Rep.Congo, 177. India, 176. Nepal.</p>
+<p>I now wanted to plot them as scatter plot, with x-axis with Environmental Health score, and y-axis with Ecosystem Vitality score. I’ve coloured dots with Environmental Performance Index.</p>
+<pre class="r"><code>library(hrbrthemes) ## I love this theme for ggplot! 
+library(ggrepel) ## so that text don&#39;t overlap
+
+
+epi_2018_df %&gt;% 
+  arrange(EPI.Ranking) %&gt;%
+  ggplot(aes(x=Environmental.Health , y= Ecosystem.Vitality)) +
+  geom_point(aes(color=Environmental.Performance.Index)) +
+  geom_path(size=0.2, color=&quot;#33333390&quot;, linetype=3)+
+  scale_color_viridis_c(name=&quot;EPI&quot;) +
+  theme_ipsum_rc() +
+  geom_smooth(method=&quot;lm&quot;, se=F, color=&quot;#33333330&quot;) +
+  geom_text_repel(aes(label=paste0(EPI.Ranking,&quot;.&quot;,Country)), data = . %&gt;% filter(EPI.Ranking&lt;=10|EPI.Ranking&gt;=170|Country %in% c(&quot;Canada&quot;,&quot;United States of America&quot;,&quot;Japan&quot;,&quot;Ireland&quot;)),
+            family=&quot;Roboto Condensed&quot;, min.segment.length=0) +
+  labs(title = &quot;Environmental Health vs Ecosystem Vitality&quot;,
+       subtitle = &quot;Environmental Health = Rises with Economic Growth &amp; Prosperity\nEcosystem Vitality = Comes Under Strain from Industrialization &amp; Urbanization&quot;,
+       caption = &quot;Data from https://epi.envirocenter.yale.edu/epi-topline&quot;)</code></pre>
+<p><img src="/post/2018-10-05-environmental-performance-index-simple-scatter-plot_files/figure-html/unnamed-chunk-2-1.png" width="1056" /></p>
+<p>I’ve labeled top 10 countries, and bottom 10 countries, also US, Canada and Japan. US was only ranked at 27th, which I thought was quite low, Japan was higher than US, at 20th. I was also surprised that canada is also lower at 25th.</p>
+<p>Using <a href="https://cran.r-project.org/web/packages/countrycode/index.html">countrycode</a> package, I wanted to append extra information about country, such as “Continent” and “Region”.</p>
+<p>I’ve coloured plot with “continent” to see if there’s a cluster…</p>
+<pre class="r"><code>library(countrycode)
+library(ggalt)
+
+epi_2018_df &lt;- epi_2018_df %&gt;% 
+  mutate(continent = countrycode(Country ,&quot;country.name&quot;, &quot;continent&quot;, warn=F),
+         country_code = countrycode(Country, &quot;country.name&quot;, &quot;iso3c&quot;,nomatch = &quot;&quot;),
+         region = countrycode(Country, &quot;country.name&quot;, &quot;region&quot;, warn=F))
+
+epi_2018_df &lt;- epi_2018_df %&gt;%
+  mutate(detail_url = paste0(&quot;https://epi.envirocenter.yale.edu/epi-country-report/&quot;,country_code))
+
+## Micronesia didn&#39;t get categorized...
+
+epi_2018_df %&gt;% 
+  ggplot(aes(x=Environmental.Health , y= Ecosystem.Vitality, color=continent)) +
+  geom_point(aes(color=continent), size=3, alpha=0.6) +
+  geom_encircle(na.rm=T, s_shape=1, linetype=3, alpha=0.6) +
+  scale_color_viridis_d(name=&quot;Continent&quot;, na.value=&quot;grey&quot;, option=&quot;A&quot;, end=0.9) +
+  geom_rug(alpha=0.3) +
+  theme_ipsum_rc() +
+  geom_text_repel(aes(label=paste0(EPI.Ranking,&quot;.&quot;,Country)),
+            family=&quot;Roboto Condensed&quot;, min.segment.length=0, size=2, 
+            color=&quot;#00000090&quot;, segment.colour = &quot;#33333350&quot;) +
+  labs(title = &quot;Environmental Health vs Ecosystem Vitality&quot;,
+       subtitle = &quot;Colour = Continent&quot;) +
+  scale_x_continuous(breaks=round(fivenum(epi_2018_df$Environmental.Health),1)) +
+  scale_y_continuous(breaks=round(fivenum(epi_2018_df$Ecosystem.Vitality),1))</code></pre>
+<p><img src="/post/2018-10-05-environmental-performance-index-simple-scatter-plot_files/figure-html/unnamed-chunk-3-1.png" width="1056" /></p>
+<p>After I’ve done the above, I realized there are actually <a href="https://epi.envirocenter.yale.edu/epi-downloads">Downloads</a> section on EPI with more data… So I actually didn’t have to scape the website table, nor code the region using countrycode.</p>
+<p>I’ve decided to download 2018 EPI Country Snapshot for now. This table contains 12 variables for 180 countries, with stats like GDP, GDP per Capita, Land Area, Population, Popular Density, Population Growth Rate and SDGI (I’m not sure what SDGI is, and I couldn’t figure out from browsing through the web…)</p>
+<p><img src="/post/2018-10-05-environmental-performance-index-simple-scatter-plot_files/figure-html/countrysnapshot-1.png" width="672" /></p>
+<p>While I know EPI, Environmental Health, and Ecosystem Vitality should be correlated, it’s interesing that EPI and GDP per Capiata is correlated strongly. So I’ve decided to create another scatter plot showing that relationship.</p>
+<pre class="r"><code>epi_2018_df_comb %&gt;%
+  ggplot(aes(x=GDPpc, y=Environmental.Performance.Index )) +
+  geom_point(aes(color=PopDensity)) +
+  theme_ipsum_rc() +
+  geom_smooth(se=F, method=&quot;lm&quot;, color=&quot;#33333330&quot;) +
+  scale_x_comma() +
+  scale_color_viridis_c(trans=&quot;log10&quot;) +
+  geom_text_repel(aes(label=country), 
+                  data = . %&gt;% filter(GDPpc &gt; 60000 | Environmental.Performance.Index &gt; 80 | 
+                    country %in% c(&quot;United States of America&quot;,&quot;Japan&quot;,&quot;Canada&quot;,&quot;India&quot;,&quot;China&quot;)),
+                  family=&quot;Roboto Condensed&quot;, min.segment.length = 0, nudge_x=10) +
+  labs(title=&quot;GDP per Capita vs EPI&quot;,
+       caption = &quot;Data Source: https://epi.envirocenter.yale.edu/epi-downloads&quot;,
+       xlab =&quot;GDP per Capita - 2018&quot;, ylab=&quot;Environmental Performance Index&quot;)</code></pre>
+<p><img src="/post/2018-10-05-environmental-performance-index-simple-scatter-plot_files/figure-html/epi_and_gdp_per_capita-1.png" width="1056" /></p>
