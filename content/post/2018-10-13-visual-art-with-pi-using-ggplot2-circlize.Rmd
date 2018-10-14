@@ -19,7 +19,7 @@ linktitle: ''
 
 I stumbled across this beautiful art on [Washington Post article](https://www.washingtonpost.com/news/wonk/wp/2015/03/14/10-stunning-images-show-the-beauty-hidden-in-pi/?noredirect=on&utm_term=.10079a56ece1), and I wanted to try making the similar art using "digits in pi" myself using R and things I've learned recently.   
 
-## Get First 100000 digits of Pi
+## Get First 100000 digits of Pi 
 
 After bit of googling, I stumbled across this [this site](http://www.geom.uiuc.edu/~huberty/math5337/groupe/welcome.html), so I decided to get first 100000 digits from below website. 
 
