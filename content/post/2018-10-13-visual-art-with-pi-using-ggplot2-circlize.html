@@ -1,0 +1,162 @@
+---
+title: Visual Art with Pi using ggplot2 & circlize
+author: Chisato
+date: '2018-10-13'
+slug: visual-art-with-pi-using-ggplot2-circlize
+categories:
+  - R
+tags:
+  - circlize
+  - ggplot2
+  - tidytext
+description: ''
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+
+
+<p>I stumbled across this beautiful art on <a href="https://www.washingtonpost.com/news/wonk/wp/2015/03/14/10-stunning-images-show-the-beauty-hidden-in-pi/?noredirect=on&amp;utm_term=.10079a56ece1">Washington Post article</a>, and I wanted to try making the similar art using “digits in pi” myself using R and things I’ve learned recently.</p>
+<div id="get-first-100000-digits-of-pi" class="section level2">
+<h2>Get First 100000 digits of Pi</h2>
+<p>After bit of googling, I stumbled across this <a href="http://www.geom.uiuc.edu/~huberty/math5337/groupe/welcome.html">this site</a>, so I decided to get first 100000 digits from below website.</p>
+<p>However, later I discovered another site where you can download the txt file, so I could’ve used <a href="https://www.angio.net/pi/digits.html">this site</a> instead, and might have been bit simpler.</p>
+<pre class="r"><code>## Here are packages I&#39;m going to use.
+library(tidyverse)  
+library(tidytext) ## so I can break single digit per line 
+library(circlize)
+
+
+df &lt;-data.frame(x =read_lines(&quot;http://www.geom.uiuc.edu/~huberty/math5337/groupe/digits.html&quot;))
+
+
+df$x &lt;- as.character(df$x)
+df &lt;- df %&gt;% slice(-1:-12)  ## discard first 12 lines
+df &lt;- df %&gt;% slice(1:1283)  ## anything after 1283 is not pi so i only want to grab 1~1283</code></pre>
+</div>
+<div id="prepping-data-frame-for-visualization" class="section level2">
+<h2>Prepping Data Frame for Visualization</h2>
+<p>Now I have first 100000 digits of pi as character, I wanted to put them into data frame where each line would contain only 1 digit.</p>
+<p>Pretty sure there’s likely different way of doing this, but I decided I want to utilize <a href="https://cran.r-project.org/web/packages/tidytext/index.html">tidytext package</a>, that I’ve recently started to use.</p>
+<p>Then I went bit overload on appending extra information that I thought I might utilize later to visualize… While working on below I’ve discovered that if you pick any 4 digits number you like, it will appear at least once somewhere in first 100K digits of pi! (which I thought was pretty cool…)</p>
+<p>For example, if you are looking for sequence of 8864, then it will appear 10 times in first 100K digits of pi, and first one appears at 2384 decimal points.</p>
+<pre class="r"><code>## Below is NOT needed, but I just wanted to do bit of searching,,,
+df_tidy_1 &lt;- df_tidy_1 %&gt;%
+  group_by(cur) %&gt;%
+  mutate(pos_within_cur = row_number()-1) %&gt;%
+  ungroup() %&gt;%
+  mutate(dig_2 = cur*10 + nxt_1,
+         dig_3 = cur*100 + nxt_1*10 + nxt_2,
+         dig_4 = cur*1000 + nxt_1*100 + nxt_2*10 + nxt_3,
+         dig_5 = cur*10000 + nxt_1*1000 + nxt_2*100 + nxt_3*10 + nxt_4) %&gt;%
+  group_by(dig_2) %&gt;%
+  mutate(pos_within_dig_2 = row_number()-1) %&gt;%
+  ungroup() %&gt;% group_by(dig_3) %&gt;%
+  mutate(pos_within_dig_3 = row_number()-1) %&gt;%
+  ungroup() %&gt;% group_by(dig_4) %&gt;%
+  mutate(pos_within_dig_4 = row_number()-1) %&gt;%
+  ungroup() %&gt;% group_by(dig_5) %&gt;%
+  mutate(pos_within_dig_5 = row_number()-1) %&gt;%
+  ungroup() %&gt;%
+  mutate(up_down_same = case_when(nxt_1&gt;cur ~ &quot;up&quot;,
+                                  nxt_1&lt;cur~&quot;down&quot;,
+                                  TRUE ~ &quot;same&quot;))</code></pre>
+</div>
+<div id="having-fun-with-ggplot2" class="section level2">
+<h2>Having Fun with ggplot2</h2>
+<p>Now onto the fun part! Wanted to start off simple… First one is simply first 1000 digits of pi printed, but numbers 0-9 are colour coded, so that it looks bit artsy.</p>
+<p>2nd example, I’ve replaced colour coded number with dots, but added little twist. If number are even, then circle is filled, but if numbers are odd, then it is displayed with non-filled circle.</p>
+<pre class="r"><code>golden_ratio &lt;- (1+sqrt(5))/2 
+
+nc &lt;- 25  ## Number of columns i want
+#nr &lt;- floor(nc/golden_ratio)  ## use this if you want image wider than longer
+nr &lt;- floor(nc*golden_ratio)  ## Number of rows just calculated based on golden ratio.
+n &lt;- nr*nc ## number of digits to be displayed on graph
+
+df_tidy_1 %&gt;%
+  filter(pos &lt; n) %&gt;%
+  mutate(x = pos %% nc,
+         y = floor(pos / nc)) %&gt;%
+  ggplot(aes(x=x, y=y, color=factor(cur))) +
+  #geom_point(shape=19, size=5) +
+  #geom_point(aes(shape=up_down_same)) +
+  geom_text(aes(label=cur, color=factor(cur)), family=&quot;Helvetica&quot;, size=5) +
+  scale_y_reverse() +
+  theme_void() +
+  scale_color_viridis_d(option=&quot;magma&quot;, begin=0.2, guide=&quot;none&quot;) +
+  scale_fill_viridis_d(option=&quot;magma&quot;, begin=0.2, guide=&quot;none&quot;) +
+  theme(panel.background = element_rect(fill=&quot;#000000&quot;)) #+</code></pre>
+<p><img src="/post/2018-10-13-visual-art-with-pi-using-ggplot2-circlize_files/figure-html/rect_art-1.png" width="1056" /></p>
+<pre class="r"><code>  #scale_shape_manual(values=c(25,23,24), guide=&quot;none&quot;)
+
+#ggsave(filename=str_c(&quot;output/rect_&quot;,n,&quot;_digits_of_pi_as_dots.png&quot;), width=11, height=11*golden_ratio)
+
+
+## Variation of Above
+df_tidy_1 %&gt;%
+  filter(pos &lt; n) %&gt;%
+  mutate(x = pos %% nc,
+         y = floor(pos / nc),
+         odd = cur %% 2) %&gt;%
+  ggplot(aes(x=x, y=y, color=factor(cur))) +
+  #geom_text(aes(label=cur, color=factor(cur)), family=&quot;Helvetica&quot;, size=3) +
+  geom_point(aes(shape=factor(odd)), size=5, alpha=0.9) +
+  scale_y_reverse() +
+  theme_void() +
+  scale_color_viridis_d(option=&quot;magma&quot;, begin=0.3, guide=&quot;none&quot;) +
+  scale_shape_manual(values=c(19,21), guide=&quot;none&quot;) +  ##24, 25 triangle
+  theme(panel.background = element_rect(fill=&quot;#000000&quot;)) </code></pre>
+<p><img src="/post/2018-10-13-visual-art-with-pi-using-ggplot2-circlize_files/figure-html/rect_art-2.png" width="1056" /></p>
+<pre class="r"><code>#ggsave(filename=str_c(&quot;output/rect_first_&quot;,n,&quot;digits_of_pi_dots2.png&quot;), height=11, width=11*golden_ratio)</code></pre>
+</div>
+<div id="creating-art-with-connecting-2-consective-digits-using-geom_segment" class="section level2">
+<h2>Creating Art with connecting 2 consective digits using geom_segment</h2>
+<p>This time, I wanted to utilize geom_segment to draw strings in the way that 2 consective digits are connected with strings. I love viridis palette especially magma palette, so I’ve stuck to same colour pallette for now, but I can definitely see I can play around with different colour palette.</p>
+<p>For 2nd plot, I’ve also tried to see what would happen if I’ve placed plot on polar coordinate.</p>
+<pre class="r"><code>n_string &lt;- 10000 ## number of items i&#39;ll show in graph
+
+df_tidy_1 %&gt;%
+  filter(pos &lt; n_string) %&gt;%
+  mutate(x = cur + (pos/n_string) ,
+         xend = nxt_1 + (pos/n_string),
+         odd = cur %% 2) %&gt;%
+  ggplot(aes(color=dig_4)) +  
+  geom_segment(aes(x=x, xend=xend, y=0,yend=1), size=0.05) +
+  scale_color_viridis_c(option=&quot;magma&quot;, guide=&quot;none&quot;, begin=0.2) + ## i like plasma too
+  theme_void() +
+  theme(panel.background = element_rect(fill=&quot;#000000&quot;)) </code></pre>
+<p><img src="/post/2018-10-13-visual-art-with-pi-using-ggplot2-circlize_files/figure-html/string_art-1.png" width="1056" /></p>
+<pre class="r"><code>#ggsave(file=&quot;output/100K_strings_pi_art_plasma.png&quot;, width=17, height=floor(17/golden_ratio))
+
+df_tidy_1 %&gt;%
+  filter(pos &lt; n_string) %&gt;%
+  mutate(x = cur + (pos/n_string) ,
+         xend = nxt_1 + (pos/n_string)) %&gt;%
+  ggplot(aes(color=dig_4)) +  
+  geom_segment(aes(x=x, xend=xend, y=0,yend=1), size=0.02) +
+  scale_color_viridis_c(option=&quot;magma&quot;, guide=&quot;none&quot;, begin=0.2) + ## i like plasma too
+  theme_void() +
+  theme(panel.background = element_rect(fill=&quot;#000000&quot;)) +
+  coord_polar(theta=&quot;x&quot;)</code></pre>
+<p><img src="/post/2018-10-13-visual-art-with-pi-using-ggplot2-circlize_files/figure-html/string_art-2.png" width="1056" /></p>
+</div>
+<div id="visualizing-with-circlize" class="section level2">
+<h2>Visualizing with Circlize</h2>
+<p>Using same colour schema I wanted to also try out plotting digits of pi with circo graph using <a href="https://cran.r-project.org/web/packages/circlize/index.html">circlize package</a>. I love using <a href="https://jokergoo.github.io/circlize_book/book/the-chorddiagram-function.html">chordDiagram function</a>! It’s amazing just few lines of code, I was able to produce pretty neat chart.</p>
+<pre class="r"><code>library(circlize)
+magma_pal &lt;- viridis::magma(n=10, begin=0.2)
+names(magma_pal) &lt;- c(0,1,2,3,4,5,6,7,8,9) ## 
+
+
+par(bg = &quot;#000000&quot;,col=&quot;#ffffff&quot;)
+circos.par(start.degree = 90 )
+chordDiagram(df_tidy_1 %&gt;% filter(pos&lt;2000) %&gt;% select(cur, nxt_1),
+             order = c(0:9),
+             grid.col=magma_pal, 
+             annotationTrack=c(&quot;grid&quot;,&quot;name&quot;),
+             directional = 1)</code></pre>
+<p><img src="/post/2018-10-13-visual-art-with-pi-using-ggplot2-circlize_files/figure-html/circlize_art-1.png" width="1056" /></p>
+<pre class="r"><code>circos.clear()</code></pre>
+</div>
