@@ -1,0 +1,176 @@
+---
+title: Random Walk of Pi - Another ggplot2 Experiment
+author: Chisato
+date: '2018-10-14'
+slug: random-walk-of-pi-another-ggplot2-experiment
+categories:
+  - R
+tags:
+  - ggplot2
+description: ''
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+
+
+<p>There are so many beautiful “π” arts everywhere, and I wanted to practice ggplot2 by mimicing those arts <a href="https://chichacha.netlify.com/2018/10/13/visual-art-with-pi-using-ggplot2-circlize/">further more</a>. Another pi art caught my eye is random walk of pi digits. Here’s one of examples in <a href="https://www.wired.com/2012/06/a-random-walk-with-pi/">WIRED magazine</a>.</p>
+<p>For random walk to work, I’ve assigned direction to “walk” depending on digits 0-9.</p>
+<p><img src="/post/2018-10-14-random-walk-of-pi-another-ggplot2-experiment_files/figure-html/unnamed-chunk-1-1.png" width="480" /></p>
+<p>I’ve prepared data frame as below, so I can use ggplot2 to plot</p>
+<pre class="r"><code>## pi_df contains first 100K digits , each digit is stored in one row.
+
+df_walk &lt;- pi_df %&gt;% 
+  mutate(pos = row_number()-1, ## assign position
+         dig= as.numeric(dig)) %&gt;%
+  select(pos, dig) %&gt;%
+  mutate(angle_rad = 2*pi/10*dig,  ## using current digit determine direction to move
+         angle_deg = circular::deg(angle_rad), ## I just like to see number in degree...
+         move_x = cos(angle_rad), ## how much to move in x direction
+         move_y = sin(angle_rad), ## how much to move in y direction
+         last_x = replace_na(lag(move_x),0), ## position of last x, set origin as 0
+         last_y = replace_na(lag(move_y),0), ## position of last y, set origin as 0
+         cumsum_x = cumsum(move_x), ## walkig == adding up all steps in x
+         cumsum_y = cumsum(move_y), ## walking == adding up all steps in y
+         cumsum_x_lag = cumsum(last_x),
+         cumsum_y_lag = cumsum(last_y)) 
+
+df_walk %&gt;% head(n=5) %&gt;% knitr::kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="right">pos</th>
+<th align="right">dig</th>
+<th align="right">angle_rad</th>
+<th align="right">angle_deg</th>
+<th align="right">move_x</th>
+<th align="right">move_y</th>
+<th align="right">last_x</th>
+<th align="right">last_y</th>
+<th align="right">cumsum_x</th>
+<th align="right">cumsum_y</th>
+<th align="right">cumsum_x_lag</th>
+<th align="right">cumsum_y_lag</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">0</td>
+<td align="right">3</td>
+<td align="right">1.8849556</td>
+<td align="right">108</td>
+<td align="right">-0.309017</td>
+<td align="right">0.9510565</td>
+<td align="right">0.000000</td>
+<td align="right">0.0000000</td>
+<td align="right">-0.309017</td>
+<td align="right">0.9510565</td>
+<td align="right">0.000000</td>
+<td align="right">0.0000000</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0.6283185</td>
+<td align="right">36</td>
+<td align="right">0.809017</td>
+<td align="right">0.5877853</td>
+<td align="right">-0.309017</td>
+<td align="right">0.9510565</td>
+<td align="right">0.500000</td>
+<td align="right">1.5388418</td>
+<td align="right">-0.309017</td>
+<td align="right">0.9510565</td>
+</tr>
+<tr class="odd">
+<td align="right">2</td>
+<td align="right">4</td>
+<td align="right">2.5132741</td>
+<td align="right">144</td>
+<td align="right">-0.809017</td>
+<td align="right">0.5877853</td>
+<td align="right">0.809017</td>
+<td align="right">0.5877853</td>
+<td align="right">-0.309017</td>
+<td align="right">2.1266270</td>
+<td align="right">0.500000</td>
+<td align="right">1.5388418</td>
+</tr>
+<tr class="even">
+<td align="right">3</td>
+<td align="right">1</td>
+<td align="right">0.6283185</td>
+<td align="right">36</td>
+<td align="right">0.809017</td>
+<td align="right">0.5877853</td>
+<td align="right">-0.809017</td>
+<td align="right">0.5877853</td>
+<td align="right">0.500000</td>
+<td align="right">2.7144123</td>
+<td align="right">-0.309017</td>
+<td align="right">2.1266270</td>
+</tr>
+<tr class="odd">
+<td align="right">4</td>
+<td align="right">5</td>
+<td align="right">3.1415927</td>
+<td align="right">180</td>
+<td align="right">-1.000000</td>
+<td align="right">0.0000000</td>
+<td align="right">0.809017</td>
+<td align="right">0.5877853</td>
+<td align="right">-0.500000</td>
+<td align="right">2.7144123</td>
+<td align="right">0.500000</td>
+<td align="right">2.7144123</td>
+</tr>
+</tbody>
+</table>
+<p>Now to visualize the random walk, I’ve used below script to visualize first 1000, first 10000 and first 100000 digits of pi.</p>
+<pre class="r"><code>n_steps &lt;- 1000
+## Random Walk of Pi
+df_walk %&gt;% 
+  filter(pos &lt; n_steps) %&gt;%
+  ggplot(aes(x=cumsum_x, y=cumsum_y, color=pos)) + 
+  geom_segment(size=0.5, aes(xend=cumsum_x_lag, yend=cumsum_y_lag)) +
+  geom_point(size=0.8) + 
+  theme_void(base_family=&quot;Roboto Condensed&quot;) +
+  theme(panel.background=element_rect(fill=&quot;#000000&quot;)) +
+  scale_color_viridis_c(option=&quot;plasma&quot;, guide=&quot;none&quot;) +
+  labs(caption=paste(&quot;First&quot;,n_steps,&quot;digits of Pi&quot;))  +
+  geom_hline(yintercept=0, color=&quot;#ffffff30&quot;, linetype=3) +
+  geom_vline(xintercept=0, color=&quot;#ffffff30&quot;, linetype=3)</code></pre>
+<p><img src="/post/2018-10-14-random-walk-of-pi-another-ggplot2-experiment_files/figure-html/ggplot2_fun-1.png" width="1056" /></p>
+<pre class="r"><code>#ggsave(str_c(&quot;output/random_walk_pi_&quot;,n_steps,&quot;.png&quot;), width=11, height=7)
+
+
+n_steps &lt;- 10000
+## Random Walk of Pi
+df_walk %&gt;% 
+  filter(pos &lt; n_steps) %&gt;%
+  ggplot(aes(x=cumsum_x, y=cumsum_y, color=pos)) + 
+  geom_segment(size=0.1, aes(xend=cumsum_x_lag, yend=cumsum_y_lag)) +
+  geom_point(size=0.01) + 
+  theme_void(base_family=&quot;Roboto Condensed&quot;) +
+  theme(panel.background=element_rect(fill=&quot;#000000&quot;)) +
+  scale_color_viridis_c(option=&quot;plasma&quot;, guide=&quot;none&quot;) +
+  labs(caption=paste(&quot;First&quot;,n_steps,&quot;digits of Pi&quot;))  +
+  geom_hline(yintercept=0, color=&quot;#ffffff30&quot;, linetype=3) +
+  geom_vline(xintercept=0, color=&quot;#ffffff30&quot;, linetype=3)</code></pre>
+<p><img src="/post/2018-10-14-random-walk-of-pi-another-ggplot2-experiment_files/figure-html/ggplot2_fun-2.png" width="1056" /></p>
+<pre class="r"><code>n_steps &lt;- 100000
+## Random Walk of Pi
+df_walk %&gt;% 
+  filter(pos &lt; n_steps) %&gt;%
+  ggplot(aes(x=cumsum_x, y=cumsum_y, color=pos)) + 
+  geom_segment(size=0.1, aes(xend=cumsum_x_lag, yend=cumsum_y_lag)) +
+  geom_point(size=0.005) + 
+  theme_void(base_family=&quot;Roboto Condensed&quot;) +
+  theme(panel.background=element_rect(fill=&quot;#000000&quot;)) +
+  scale_color_viridis_c(option=&quot;plasma&quot;, guide=&quot;none&quot;) +
+  labs(caption=paste(&quot;First 100000 digits of Pi&quot;))  +
+  geom_hline(yintercept=0, color=&quot;#ffffff30&quot;, linetype=3) +
+  geom_vline(xintercept=0, color=&quot;#ffffff30&quot;, linetype=3)</code></pre>
+<p><img src="/post/2018-10-14-random-walk-of-pi-another-ggplot2-experiment_files/figure-html/ggplot2_fun-3.png" width="1056" /></p>

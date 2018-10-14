@@ -1,0 +1,135 @@
+---
+title: Random Walk of Pi - Another ggplot2 Experiment
+author: Chisato
+date: '2018-10-14'
+slug: random-walk-of-pi-another-ggplot2-experiment
+categories:
+  - R
+tags:
+  - ggplot2
+description: ''
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+There are so many beautiful "π" arts everywhere, and I wanted to practice ggplot2 by mimicing those arts [further more](https://chichacha.netlify.com/2018/10/13/visual-art-with-pi-using-ggplot2-circlize/).   Another pi art caught my eye is random walk of pi digits. Here's one of examples in [WIRED magazine](https://www.wired.com/2012/06/a-random-walk-with-pi/).
+
+
+For random walk to work, I've assigned direction to "walk" depending on digits 0-9.
+
+```{r echo=FALSE, fig.height=5, fig.width=5, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+library(tidyverse)
+library(tidytext)
+
+pi_df <- data.frame(x=read_file("https://www.angio.net/pi/digits/100000.txt")) %>% 
+  unnest_tokens(dig,x, token = "character_shingles",n=1)
+
+## paramters
+n_angle = 10
+
+random_walk_rule <- tibble(
+  t = c(1:n_angle),
+  t_label = c(1:9,0),
+  angle_rad = (2*pi)/n_angle * t,
+  angle_deg = (360/n_angle) * t, ## just easier to understand in degree 
+  x = cos(angle_rad),
+  y = sin(angle_rad) 
+)
+
+random_walk_rule %>% ggplot(aes(x=x, y=y)) + 
+  geom_segment(aes(xend=0, yend=0), size=3, lineend = "round", 
+               alpha=1,
+               arrow=arrow(end="first")) +
+  geom_text(aes(label=t_label, x=x*1.1, y=y*1.1), size=10, family="Roboto Condensed") +
+  coord_fixed(xlim=c(-1.5,1.5), ylim=c(-1.5,1.5)) +
+  theme_void() +
+  scale_color_viridis_d(option="plasma", guide="none")
+
+```
+
+
+I've prepared data frame as below, so I can use ggplot2 to plot
+
+```{r prepping_df, message=FALSE, warning=FALSE}
+
+## pi_df contains first 100K digits , each digit is stored in one row.
+
+df_walk <- pi_df %>% 
+  mutate(pos = row_number()-1, ## assign position
+         dig= as.numeric(dig)) %>%
+  select(pos, dig) %>%
+  mutate(angle_rad = 2*pi/10*dig,  ## using current digit determine direction to move
+         angle_deg = circular::deg(angle_rad), ## I just like to see number in degree...
+         move_x = cos(angle_rad), ## how much to move in x direction
+         move_y = sin(angle_rad), ## how much to move in y direction
+         last_x = replace_na(lag(move_x),0), ## position of last x, set origin as 0
+         last_y = replace_na(lag(move_y),0), ## position of last y, set origin as 0
+         cumsum_x = cumsum(move_x), ## walkig == adding up all steps in x
+         cumsum_y = cumsum(move_y), ## walking == adding up all steps in y
+         cumsum_x_lag = cumsum(last_x),
+         cumsum_y_lag = cumsum(last_y)) 
+
+df_walk %>% head(n=5) %>% knitr::kable()
+
+
+```
+
+
+Now to visualize the random walk, I've used below script to visualize first 1000, first 10000 and first 100000 digits of pi.
+
+```{r ggplot2_fun, fig.height=9, fig.width=11, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+
+n_steps <- 1000
+## Random Walk of Pi
+df_walk %>% 
+  filter(pos < n_steps) %>%
+  ggplot(aes(x=cumsum_x, y=cumsum_y, color=pos)) + 
+  geom_segment(size=0.5, aes(xend=cumsum_x_lag, yend=cumsum_y_lag)) +
+  geom_point(size=0.8) + 
+  theme_void(base_family="Roboto Condensed") +
+  theme(panel.background=element_rect(fill="#000000")) +
+  scale_color_viridis_c(option="plasma", guide="none") +
+  labs(caption=paste("First",n_steps,"digits of Pi"))  +
+  geom_hline(yintercept=0, color="#ffffff30", linetype=3) +
+  geom_vline(xintercept=0, color="#ffffff30", linetype=3)
+
+#ggsave(str_c("output/random_walk_pi_",n_steps,".png"), width=11, height=7)
+
+
+n_steps <- 10000
+## Random Walk of Pi
+df_walk %>% 
+  filter(pos < n_steps) %>%
+  ggplot(aes(x=cumsum_x, y=cumsum_y, color=pos)) + 
+  geom_segment(size=0.1, aes(xend=cumsum_x_lag, yend=cumsum_y_lag)) +
+  geom_point(size=0.01) + 
+  theme_void(base_family="Roboto Condensed") +
+  theme(panel.background=element_rect(fill="#000000")) +
+  scale_color_viridis_c(option="plasma", guide="none") +
+  labs(caption=paste("First",n_steps,"digits of Pi"))  +
+  geom_hline(yintercept=0, color="#ffffff30", linetype=3) +
+  geom_vline(xintercept=0, color="#ffffff30", linetype=3)
+
+
+n_steps <- 100000
+## Random Walk of Pi
+df_walk %>% 
+  filter(pos < n_steps) %>%
+  ggplot(aes(x=cumsum_x, y=cumsum_y, color=pos)) + 
+  geom_segment(size=0.1, aes(xend=cumsum_x_lag, yend=cumsum_y_lag)) +
+  geom_point(size=0.005) + 
+  theme_void(base_family="Roboto Condensed") +
+  theme(panel.background=element_rect(fill="#000000")) +
+  scale_color_viridis_c(option="plasma", guide="none") +
+  labs(caption=paste("First 100000 digits of Pi"))  +
+  geom_hline(yintercept=0, color="#ffffff30", linetype=3) +
+  geom_vline(xintercept=0, color="#ffffff30", linetype=3)
+
+
+
+```
+
