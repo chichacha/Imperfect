@@ -215,7 +215,7 @@ chordDiagram(df_tidy_1 %>% filter(pos<2000) %>% select(cur, nxt_1),
              annotationTrack=c("grid","name"),
              directional = 1)
 
-circos.clear()
+#circos.clear()
 
 ```
 
