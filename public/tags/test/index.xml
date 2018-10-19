@@ -17,7 +17,7 @@
       <pubDate>Sat, 19 May 2018 00:00:00 +0000</pubDate>
       
       <guid>/2018/05/19/testing-entry-with-r-rmarkdown-file/</guid>
-      <description>Hello! World! Just figuring out how the blog post works with this random set of coffee data.
+      <description>Hello! World! Just figuring out how the blog post works with this random set of coffee data!
  Espresso Drinks Visualized with ggplot2 Pie Chart Pie chart can be created with using polar coordinate.
 ## Pie Chart coffee_long %&amp;gt;% ggplot() + geom_bar(aes(x=sqrt(total.amount)/2, y = amount, fill=fct_rev(ingredient.f), width=sqrt(total.amount)), stat=&amp;quot;identity&amp;quot;, position=&amp;quot;fill&amp;quot;) + facet_wrap(~name2, ncol=4) + geom_text(aes(x=sqrt(total.amount), y=Inf, label=&amp;quot;&amp;quot;), size=7) + theme_void(base_family=&amp;quot;Roboto Condensed&amp;quot;) + coord_polar(theta=&amp;quot;y&amp;quot;) + scale_fill_hue(name=&amp;quot;Ingredient&amp;quot;, l=80) + theme(legend.position=&amp;quot;top&amp;quot;)  Espresso Drinks Visualized with ggplot2 Bar Chart ## Bar Chart coffee_long %&amp;gt;% ggplot() + geom_bar(aes(x=3, y = amount, fill=fct_rev(ingredient.</description>
     </item>

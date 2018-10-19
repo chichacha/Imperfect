@@ -6,10 +6,56 @@
     <description>Recent content in Posts on Chi&#39;s Impe[r]fect Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 26 May 2018 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 17 Oct 2018 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Cannabis Curve with ggplot2 </title>
+      <link>/2018/10/17/cannibus-curve-with-ggplot2/</link>
+      <pubDate>Wed, 17 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/2018/10/17/cannibus-curve-with-ggplot2/</guid>
+      <description>Starting today, recreational weed is legal in Canada. This news has some how lead me to find Cannabis Curve, a mathematical equation to draw Cannabis….!!!
+So to celebrate? being 2nd country in the world (1st was Uruguay) to legalize the green stuff for fun, I decided I’ll try drawing cannabis curve with ggplot. Here’s the final results.
+Cannabis_Final
+ Here’s the step I took, because I couldn’t really understand the mathematical equation, so I’ve break it down step by step to sort of understand what each part of equation is doing.</description>
+    </item>
+    
+    <item>
+      <title>Random Walk of Pi - Another ggplot2 Experiment</title>
+      <link>/2018/10/14/random-walk-of-pi-another-ggplot2-experiment/</link>
+      <pubDate>Sun, 14 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/2018/10/14/random-walk-of-pi-another-ggplot2-experiment/</guid>
+      <description>There are so many beautiful “π” arts everywhere, and I wanted to practice ggplot2 by mimicing those arts further more. Another pi art caught my eye is random walk of pi digits. Here’s one of examples in WIRED magazine.
+For random walk to work, I’ve assigned direction to “walk” depending on digits 0-9.
+I’ve prepared data frame as below, so I can use ggplot2 to plot
+## pi_df contains first 100K digits , each digit is stored in one row.</description>
+    </item>
+    
+    <item>
+      <title>Visual Art with Pi using ggplot2 &amp; circlize</title>
+      <link>/2018/10/13/visual-art-with-pi-using-ggplot2-circlize/</link>
+      <pubDate>Sat, 13 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/2018/10/13/visual-art-with-pi-using-ggplot2-circlize/</guid>
+      <description>I stumbled across this beautiful art on Washington Post article, and I wanted to try making the similar art using “digits in pi” myself using R and things I’ve learned recently.
+Get First 100000 digits of Pi After bit of googling, I stumbled across this this site, so I decided to get first 100000 digits from below website.
+However, later I discovered another site where you can download the txt file, so I could’ve used this site instead, and might have been bit simpler.</description>
+    </item>
+    
+    <item>
+      <title>Environmental Performance Index - Simple Scatter Plot</title>
+      <link>/2018/10/05/environmental-performance-index-simple-scatter-plot/</link>
+      <pubDate>Fri, 05 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/2018/10/05/environmental-performance-index-simple-scatter-plot/</guid>
+      <description>While reading the news that Ireland becomes world’s first country to divest from fossil fuels, I just got curious how do we measure “green-ness” of country when we rank them in general, and I came across the Environmental Performance Index page with ranking table.
+Table contained 180 countries with some numerics values for Environment Performance Index, “Enviornmental Health”, “Ecosystem Vitality”.
+I thought it would be interesting to plot them using ggplot2.</description>
+    </item>
     
     <item>
       <title>Making Calendar with ggplot &#43; Moon Phase Calendar for fun</title>
