@@ -15,13 +15,13 @@ linktitle: ''
 ---
 
 
-Starting today, recreational weed is legal in Canada.  This news has some how lead me to find  [Cannabis Curve](http://mathworld.wolfram.com/CannabisCurve.html), a mathmatical equation to draw Cannibus....!!! 
+Starting today, recreational weed is legal in Canada.  This news has some how lead me to find  [Cannabis Curve](http://mathworld.wolfram.com/CannabisCurve.html), a mathematical equation to draw Cannabis....!!! 
 
 So to celebrate? being 2nd country in the world (1st was [Uruguay](http://fortune.com/2018/10/17/canada-marijuana-weed-legalization-uruguay/)) to legalize the green stuff for fun, I decided I'll try drawing cannabis curve with ggplot. Here's the final results. 
 
 ![Cannabis_Final](/post/2018-10-17-cannibus-curve-with-ggplot2_files/cannibus.png){width=600px}
 
-Here's the step I took, because I couldn't really understand the mathmatical equation, so I've break it down step by step to sort of understand what each part of equation is doing. 
+Here's the step I took, because I couldn't really understand the mathematical equation, so I've break it down step by step to sort of understand what each part of equation is doing. 
 
 ```{r demystify_cannabis, echo=TRUE, fig.width=8, message=FALSE, warning=FALSE, paged.print=FALSE}
 
@@ -81,7 +81,7 @@ I couldn't figure out how to "crop" the polar coordinate image, so there's lots 
 
 *** 
 
-I couldn't find way to crop the image, but I realized I just need to plot the above in cartesian coordinate...!  
+I couldn't find way to crop the image, but I realized I just need to plot the above in Cartesian coordinate...!  
 
 ```{r polar_to_cartesian, echo=TRUE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, paged.print=FALSE}
 

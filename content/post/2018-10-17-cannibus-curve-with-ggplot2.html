@@ -16,13 +16,13 @@ linktitle: ''
 
 
 
-<p>Starting today, recreational weed is legal in Canada. This news has some how lead me to find <a href="http://mathworld.wolfram.com/CannabisCurve.html">Cannabis Curve</a>, a mathmatical equation to draw Cannibus….!!!</p>
+<p>Starting today, recreational weed is legal in Canada. This news has some how lead me to find <a href="http://mathworld.wolfram.com/CannabisCurve.html">Cannabis Curve</a>, a mathematical equation to draw Cannabis….!!!</p>
 <p>So to celebrate? being 2nd country in the world (1st was <a href="http://fortune.com/2018/10/17/canada-marijuana-weed-legalization-uruguay/">Uruguay</a>) to legalize the green stuff for fun, I decided I’ll try drawing cannabis curve with ggplot. Here’s the final results.</p>
 <div class="figure">
 <img src="/post/2018-10-17-cannibus-curve-with-ggplot2_files/cannibus.png" alt="Cannabis_Final" width="600" />
 <p class="caption">Cannabis_Final</p>
 </div>
-<p>Here’s the step I took, because I couldn’t really understand the mathmatical equation, so I’ve break it down step by step to sort of understand what each part of equation is doing.</p>
+<p>Here’s the step I took, because I couldn’t really understand the mathematical equation, so I’ve break it down step by step to sort of understand what each part of equation is doing.</p>
 <pre class="r"><code>library(tidyverse)
 
 cannabis &lt;- tibble(
@@ -72,7 +72,7 @@ cannabis %&gt;%
 <p><img src="/post/2018-10-17-cannibus-curve-with-ggplot2_files/figure-html/demystify_cannabis-5.png" width="768" /></p>
 <p>I couldn’t figure out how to “crop” the polar coordinate image, so there’s lots of white space on final image, but I like my little cannabis!</p>
 <hr />
-<p>I couldn’t find way to crop the image, but I realized I just need to plot the above in cartesian coordinate…!</p>
+<p>I couldn’t find way to crop the image, but I realized I just need to plot the above in Cartesian coordinate…!</p>
 <pre class="r"><code># To translate polar coordinate to cartesian, I can use below 
 ## x = r * cos(theta)
 ## y = r * sin(theta)
