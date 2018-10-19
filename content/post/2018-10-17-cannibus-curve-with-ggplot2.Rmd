@@ -14,8 +14,6 @@ featuredpath: ''
 linktitle: ''
 ---
 
-Realized I've made spelling error on word cannabis everywhere...  It should be spelled "Cannabis" oops.. 
-*** 
 
 Starting today, recreational weed is legal in Canada.  This news has some how lead me to find  [Cannabis Curve](http://mathworld.wolfram.com/CannabisCurve.html), a mathmatical equation to draw Cannibus....!!! 
 
