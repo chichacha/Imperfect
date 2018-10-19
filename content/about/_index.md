@@ -5,7 +5,7 @@ date = "2018-05-18"
 
 # Hello
 
-Hello! My name is Chisato, it's pronounced sort of like "Chi" (as in Taichi) "Sir" "Toe".  
+Hello! My name is Chisato, it's pronounced sort of like "Chi" (as in Taichi) "Sa" "Toe".  
 Or most of my friends calls me just "Chi" for short. 
 
 Thank you for stopping by. I've discovered R few years ago, and while it took a while to get started, I have feel in love with the tool, and become somewhat obsessed. [R-blogger](https://www.r-bloggers.com/) and other blog entry has really helped me learn I am amused with amount of information being shared by the others.  

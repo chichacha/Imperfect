@@ -6,10 +6,607 @@
     <description>Recent content on Chi&#39;s Impe[r]fect Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 26 May 2018 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 17 Oct 2018 00:00:00 +0000</lastBuildDate>
     
-	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+        <atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Cannabis Curve with ggplot2 </title>
+      <link>/2018/10/17/cannibus-curve-with-ggplot2/</link>
+      <pubDate>Wed, 17 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/2018/10/17/cannibus-curve-with-ggplot2/</guid>
+      <description>&lt;p&gt;Starting today, recreational weed is legal in Canada. This news has some how lead me to find &lt;a href=&#34;http://mathworld.wolfram.com/CannabisCurve.html&#34;&gt;Cannabis Curve&lt;/a&gt;, a mathematical equation to draw Cannabis….!!!&lt;/p&gt;
+&lt;p&gt;So to celebrate? being 2nd country in the world (1st was &lt;a href=&#34;http://fortune.com/2018/10/17/canada-marijuana-weed-legalization-uruguay/&#34;&gt;Uruguay&lt;/a&gt;) to legalize the green stuff for fun, I decided I’ll try drawing cannabis curve with ggplot. Here’s the final results.&lt;/p&gt;
+&lt;div class=&#34;figure&#34;&gt;
+&lt;img src=&#34;/post/2018-10-17-cannibus-curve-with-ggplot2_files/cannibus.png&#34; alt=&#34;Cannabis_Final&#34; width=&#34;600&#34; /&gt;
+&lt;p class=&#34;caption&#34;&gt;Cannabis_Final&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;Here’s the step I took, because I couldn’t really understand the mathematical equation, so I’ve break it down step by step to sort of understand what each part of equation is doing.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(tidyverse)
+
+cannabis &amp;lt;- tibble(
+  t = seq(-pi,pi, length.out=1000),
+  r1 = (1+.9*cos(8*t)), ## this will draw 8 petals  ## this number determines number of leafs!
+  r2 = r1 * (1+.1*cos(24*t)), ## this make it pointy
+  r3 = r2 * (.9+0.5*cos(200*t)), ## this makes it jaggy
+  r4 = r3 * (1+sin(t)), ## Hmm.. I think I want to rorate it 90 degree... 
+  r4_alt = r3 * (1+sin(t-pi/2)), ## one way to do it...
+  r = (1+.9*cos(8*t)) * (1+.1*cos(24*t)) * (.9+0.5*cos(200*t)) * (1+sin(t))  ## Put all in line line!
+) 
+
+cannabis %&amp;gt;% 
+  ggplot(aes(x=t, y=r1)) + 
+  geom_path(color=&amp;quot;#7ABA71&amp;quot;, size=2) +
+  coord_polar() +
+  theme_void(base_family=&amp;quot;Roboto Condensed&amp;quot;) +
+  labs(title = &amp;quot;(1+.9*cos(8*t) draws 8 petals&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-17-cannibus-curve-with-ggplot2_files/figure-html/demystify_cannabis-1.png&#34; width=&#34;768&#34; /&gt;&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;cannabis %&amp;gt;% 
+  ggplot(aes(x=t, y=r2)) + 
+  geom_path(color=&amp;quot;#7ABA71&amp;quot;, size=2) +
+  coord_polar() +
+  theme_void(base_family=&amp;quot;Roboto Condensed&amp;quot;) +
+  labs(title = &amp;quot;(1+.9*cos(8*t) * * (1+.1*cos(24*t)) makes the tip pointy&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-17-cannibus-curve-with-ggplot2_files/figure-html/demystify_cannabis-2.png&#34; width=&#34;768&#34; /&gt;&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;cannabis %&amp;gt;% 
+  ggplot(aes(x=t, y=r3)) + 
+  geom_path(color=&amp;quot;#7ABA71&amp;quot;, size=0.5) +
+  coord_polar() +
+  theme_void(base_family=&amp;quot;Roboto Condensed&amp;quot;) +
+  labs(title = &amp;quot;(1+.9*cos(8*t) * * (1+.1*cos(24*t)) * (.9+0.5*cos(200*t)) makes zaggy&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-17-cannibus-curve-with-ggplot2_files/figure-html/demystify_cannabis-3.png&#34; width=&#34;768&#34; /&gt;&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;cannabis %&amp;gt;% 
+  ggplot(aes(x=t, y=r4)) + 
+  geom_path(color=&amp;quot;#7ABA71&amp;quot;, size=0.5) +
+  coord_polar(start=pi/2) +
+  theme_void(base_family=&amp;quot;Roboto Condensed&amp;quot;) +
+  labs(title = &amp;quot;(1+.9*cos(8*t) * * (1+.1*cos(24*t)) * (.9+0.5*cos(200*t)) * (1+sin(t)) - OK Cool, Now 2 leaves are small!&amp;quot;, subcaption=&amp;quot;Notice I used start=pi/2 to rotate!&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-17-cannibus-curve-with-ggplot2_files/figure-html/demystify_cannabis-4.png&#34; width=&#34;768&#34; /&gt;&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;cannabis %&amp;gt;% 
+  ggplot(aes(x=t, y=r)) + 
+  geom_polygon(fill=&amp;quot;#499b4a&amp;quot;, color=&amp;quot;#74Ba71&amp;quot;, size=0.1) +
+  coord_polar(theta=&amp;quot;x&amp;quot;, start=pi/2) +
+  theme_void(base_family=&amp;quot;Roboto Condensed&amp;quot;) +
+  labs(title = &amp;quot;Instead of using geom_path, I used geom_polygon&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-17-cannibus-curve-with-ggplot2_files/figure-html/demystify_cannabis-5.png&#34; width=&#34;768&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;I couldn’t figure out how to “crop” the polar coordinate image, so there’s lots of white space on final image, but I like my little cannabis!&lt;/p&gt;
+&lt;hr /&gt;
+&lt;p&gt;I couldn’t find way to crop the image, but I realized I just need to plot the above in Cartesian coordinate…!&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# To translate polar coordinate to cartesian, I can use below 
+## x = r * cos(theta)
+## y = r * sin(theta)
+
+cannabis &amp;lt;- cannabis %&amp;gt;% mutate(
+  x = r * cos(t),
+  y = r * sin(t)
+)
+
+cannabis %&amp;gt;% 
+  ggplot(aes(x=x, y=y)) + 
+  geom_polygon(fill=&amp;quot;#499b4a&amp;quot;, color=&amp;quot;#74Ba71&amp;quot;, size=0.1) +
+  theme_void(base_family=&amp;quot;Roboto Condensed&amp;quot;) +
+  labs(title = &amp;quot;Cannabis on Cartesian Coordinate&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-17-cannibus-curve-with-ggplot2_files/figure-html/polar_to_cartesian-1.png&#34; width=&#34;768&#34; /&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Random Walk of Pi - Another ggplot2 Experiment</title>
+      <link>/2018/10/14/random-walk-of-pi-another-ggplot2-experiment/</link>
+      <pubDate>Sun, 14 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/2018/10/14/random-walk-of-pi-another-ggplot2-experiment/</guid>
+      <description>&lt;p&gt;There are so many beautiful “π” arts everywhere, and I wanted to practice ggplot2 by mimicing those arts &lt;a href=&#34;https://chichacha.netlify.com/2018/10/13/visual-art-with-pi-using-ggplot2-circlize/&#34;&gt;further more&lt;/a&gt;. Another pi art caught my eye is random walk of pi digits. Here’s one of examples in &lt;a href=&#34;https://www.wired.com/2012/06/a-random-walk-with-pi/&#34;&gt;WIRED magazine&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;For random walk to work, I’ve assigned direction to “walk” depending on digits 0-9.&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-14-random-walk-of-pi-another-ggplot2-experiment_files/figure-html/unnamed-chunk-1-1.png&#34; width=&#34;480&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;I’ve prepared data frame as below, so I can use ggplot2 to plot&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;## pi_df contains first 100K digits , each digit is stored in one row.
+
+df_walk &amp;lt;- pi_df %&amp;gt;% 
+  mutate(pos = row_number()-1, ## assign position
+         dig= as.numeric(dig)) %&amp;gt;%
+  select(pos, dig) %&amp;gt;%
+  mutate(angle_rad = 2*pi/10*dig,  ## using current digit determine direction to move
+         angle_deg = circular::deg(angle_rad), ## I just like to see number in degree...
+         move_x = cos(angle_rad), ## how much to move in x direction
+         move_y = sin(angle_rad), ## how much to move in y direction
+         last_x = replace_na(lag(move_x),0), ## position of last x, set origin as 0
+         last_y = replace_na(lag(move_y),0), ## position of last y, set origin as 0
+         cumsum_x = cumsum(move_x), ## walkig == adding up all steps in x
+         cumsum_y = cumsum(move_y), ## walking == adding up all steps in y
+         cumsum_x_lag = cumsum(last_x),
+         cumsum_y_lag = cumsum(last_y)) 
+
+df_walk %&amp;gt;% head(n=5) %&amp;gt;% knitr::kable()&lt;/code&gt;&lt;/pre&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr class=&#34;header&#34;&gt;
+&lt;th align=&#34;right&#34;&gt;pos&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;dig&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;angle_rad&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;angle_deg&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;move_x&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;move_y&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;last_x&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;last_y&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;cumsum_x&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;cumsum_y&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;cumsum_x_lag&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;cumsum_y_lag&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td align=&#34;right&#34;&gt;0&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;3&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;1.8849556&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;108&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-0.309017&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.9510565&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.000000&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.0000000&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-0.309017&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.9510565&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.000000&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.0000000&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;even&#34;&gt;
+&lt;td align=&#34;right&#34;&gt;1&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;1&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.6283185&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;36&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.809017&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.5877853&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-0.309017&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.9510565&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.500000&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;1.5388418&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-0.309017&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.9510565&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td align=&#34;right&#34;&gt;2&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;4&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;2.5132741&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;144&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-0.809017&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.5877853&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.809017&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.5877853&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-0.309017&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;2.1266270&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.500000&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;1.5388418&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;even&#34;&gt;
+&lt;td align=&#34;right&#34;&gt;3&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;1&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.6283185&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;36&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.809017&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.5877853&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-0.809017&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.5877853&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.500000&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;2.7144123&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-0.309017&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;2.1266270&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td align=&#34;right&#34;&gt;4&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;5&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;3.1415927&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;180&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-1.000000&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.0000000&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.809017&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.5877853&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-0.500000&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;2.7144123&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.500000&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;2.7144123&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Now to visualize the random walk, I’ve used below script to visualize first 1000, first 10000 and first 100000 digits of pi.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;n_steps &amp;lt;- 1000
+## Random Walk of Pi
+df_walk %&amp;gt;% 
+  filter(pos &amp;lt; n_steps) %&amp;gt;%
+  ggplot(aes(x=cumsum_x, y=cumsum_y, color=pos)) + 
+  geom_segment(size=0.5, aes(xend=cumsum_x_lag, yend=cumsum_y_lag)) +
+  geom_point(size=0.8) + 
+  theme_void(base_family=&amp;quot;Roboto Condensed&amp;quot;) +
+  theme(panel.background=element_rect(fill=&amp;quot;#000000&amp;quot;)) +
+  scale_color_viridis_c(option=&amp;quot;plasma&amp;quot;, guide=&amp;quot;none&amp;quot;) +
+  labs(caption=paste(&amp;quot;First&amp;quot;,n_steps,&amp;quot;digits of Pi&amp;quot;))  +
+  geom_hline(yintercept=0, color=&amp;quot;#ffffff30&amp;quot;, linetype=3) +
+  geom_vline(xintercept=0, color=&amp;quot;#ffffff30&amp;quot;, linetype=3)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-14-random-walk-of-pi-another-ggplot2-experiment_files/figure-html/ggplot2_fun-1.png&#34; width=&#34;1056&#34; /&gt;&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;#ggsave(str_c(&amp;quot;output/random_walk_pi_&amp;quot;,n_steps,&amp;quot;.png&amp;quot;), width=11, height=7)
+
+
+n_steps &amp;lt;- 10000
+## Random Walk of Pi
+df_walk %&amp;gt;% 
+  filter(pos &amp;lt; n_steps) %&amp;gt;%
+  ggplot(aes(x=cumsum_x, y=cumsum_y, color=pos)) + 
+  geom_segment(size=0.1, aes(xend=cumsum_x_lag, yend=cumsum_y_lag)) +
+  geom_point(size=0.01) + 
+  theme_void(base_family=&amp;quot;Roboto Condensed&amp;quot;) +
+  theme(panel.background=element_rect(fill=&amp;quot;#000000&amp;quot;)) +
+  scale_color_viridis_c(option=&amp;quot;plasma&amp;quot;, guide=&amp;quot;none&amp;quot;) +
+  labs(caption=paste(&amp;quot;First&amp;quot;,n_steps,&amp;quot;digits of Pi&amp;quot;))  +
+  geom_hline(yintercept=0, color=&amp;quot;#ffffff30&amp;quot;, linetype=3) +
+  geom_vline(xintercept=0, color=&amp;quot;#ffffff30&amp;quot;, linetype=3)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-14-random-walk-of-pi-another-ggplot2-experiment_files/figure-html/ggplot2_fun-2.png&#34; width=&#34;1056&#34; /&gt;&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;n_steps &amp;lt;- 100000
+## Random Walk of Pi
+df_walk %&amp;gt;% 
+  filter(pos &amp;lt; n_steps) %&amp;gt;%
+  ggplot(aes(x=cumsum_x, y=cumsum_y, color=pos)) + 
+  geom_segment(size=0.1, aes(xend=cumsum_x_lag, yend=cumsum_y_lag)) +
+  geom_point(size=0.005) + 
+  theme_void(base_family=&amp;quot;Roboto Condensed&amp;quot;) +
+  theme(panel.background=element_rect(fill=&amp;quot;#000000&amp;quot;)) +
+  scale_color_viridis_c(option=&amp;quot;plasma&amp;quot;, guide=&amp;quot;none&amp;quot;) +
+  labs(caption=paste(&amp;quot;First 100000 digits of Pi&amp;quot;))  +
+  geom_hline(yintercept=0, color=&amp;quot;#ffffff30&amp;quot;, linetype=3) +
+  geom_vline(xintercept=0, color=&amp;quot;#ffffff30&amp;quot;, linetype=3)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-14-random-walk-of-pi-another-ggplot2-experiment_files/figure-html/ggplot2_fun-3.png&#34; width=&#34;1056&#34; /&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Visual Art with Pi using ggplot2 &amp; circlize</title>
+      <link>/2018/10/13/visual-art-with-pi-using-ggplot2-circlize/</link>
+      <pubDate>Sat, 13 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/2018/10/13/visual-art-with-pi-using-ggplot2-circlize/</guid>
+      <description>&lt;p&gt;I stumbled across this beautiful art on &lt;a href=&#34;https://www.washingtonpost.com/news/wonk/wp/2015/03/14/10-stunning-images-show-the-beauty-hidden-in-pi/?noredirect=on&amp;amp;utm_term=.10079a56ece1&#34;&gt;Washington Post article&lt;/a&gt;, and I wanted to try making the similar art using “digits in pi” myself using R and things I’ve learned recently.&lt;/p&gt;
+&lt;div id=&#34;get-first-100000-digits-of-pi&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Get First 100000 digits of Pi&lt;/h2&gt;
+&lt;p&gt;After bit of googling, I stumbled across this &lt;a href=&#34;http://www.geom.uiuc.edu/~huberty/math5337/groupe/welcome.html&#34;&gt;this site&lt;/a&gt;, so I decided to get first 100000 digits from below website.&lt;/p&gt;
+&lt;p&gt;However, later I discovered another site where you can download the txt file, so I could’ve used &lt;a href=&#34;https://www.angio.net/pi/digits.html&#34;&gt;this site&lt;/a&gt; instead, and might have been bit simpler.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;## Here are packages I&amp;#39;m going to use.
+library(tidyverse)  
+library(tidytext) ## so I can break single digit per line 
+library(circlize)
+
+
+df &amp;lt;-data.frame(x =read_lines(&amp;quot;http://www.geom.uiuc.edu/~huberty/math5337/groupe/digits.html&amp;quot;))
+
+
+df$x &amp;lt;- as.character(df$x)
+df &amp;lt;- df %&amp;gt;% slice(-1:-12)  ## discard first 12 lines
+df &amp;lt;- df %&amp;gt;% slice(1:1283)  ## anything after 1283 is not pi so i only want to grab 1~1283&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div id=&#34;prepping-data-frame-for-visualization&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Prepping Data Frame for Visualization&lt;/h2&gt;
+&lt;p&gt;Now I have first 100000 digits of pi as character, I wanted to put them into data frame where each line would contain only 1 digit.&lt;/p&gt;
+&lt;p&gt;Pretty sure there’s likely different way of doing this, but I decided I want to utilize &lt;a href=&#34;https://cran.r-project.org/web/packages/tidytext/index.html&#34;&gt;tidytext package&lt;/a&gt;, that I’ve recently started to use.&lt;/p&gt;
+&lt;p&gt;Then I went bit overload on appending extra information that I thought I might utilize later to visualize… While working on below I’ve discovered that if you pick any 4 digits number you like, it will appear at least once somewhere in first 100K digits of pi! (which I thought was pretty cool…)&lt;/p&gt;
+&lt;p&gt;For example, if you are looking for sequence of 8864, then it will appear 10 times in first 100K digits of pi, and first one appears at 2384 decimal points.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;## Below is NOT needed, but I just wanted to do bit of searching,,,
+df_tidy_1 &amp;lt;- df_tidy_1 %&amp;gt;%
+  group_by(cur) %&amp;gt;%
+  mutate(pos_within_cur = row_number()-1) %&amp;gt;%
+  ungroup() %&amp;gt;%
+  mutate(dig_2 = cur*10 + nxt_1,
+         dig_3 = cur*100 + nxt_1*10 + nxt_2,
+         dig_4 = cur*1000 + nxt_1*100 + nxt_2*10 + nxt_3,
+         dig_5 = cur*10000 + nxt_1*1000 + nxt_2*100 + nxt_3*10 + nxt_4) %&amp;gt;%
+  group_by(dig_2) %&amp;gt;%
+  mutate(pos_within_dig_2 = row_number()-1) %&amp;gt;%
+  ungroup() %&amp;gt;% group_by(dig_3) %&amp;gt;%
+  mutate(pos_within_dig_3 = row_number()-1) %&amp;gt;%
+  ungroup() %&amp;gt;% group_by(dig_4) %&amp;gt;%
+  mutate(pos_within_dig_4 = row_number()-1) %&amp;gt;%
+  ungroup() %&amp;gt;% group_by(dig_5) %&amp;gt;%
+  mutate(pos_within_dig_5 = row_number()-1) %&amp;gt;%
+  ungroup() %&amp;gt;%
+  mutate(up_down_same = case_when(nxt_1&amp;gt;cur ~ &amp;quot;up&amp;quot;,
+                                  nxt_1&amp;lt;cur~&amp;quot;down&amp;quot;,
+                                  TRUE ~ &amp;quot;same&amp;quot;))&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div id=&#34;having-fun-with-ggplot2&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Having Fun with ggplot2&lt;/h2&gt;
+&lt;p&gt;Now onto the fun part! Wanted to start off simple… First one is simply first 1000 digits of pi printed, but numbers 0-9 are colour coded, so that it looks bit artsy.&lt;/p&gt;
+&lt;p&gt;2nd example, I’ve replaced colour coded number with dots, but added little twist. If number are even, then circle is filled, but if numbers are odd, then it is displayed with non-filled circle.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;golden_ratio &amp;lt;- (1+sqrt(5))/2 
+
+nc &amp;lt;- 25  ## Number of columns i want
+#nr &amp;lt;- floor(nc/golden_ratio)  ## use this if you want image wider than longer
+nr &amp;lt;- floor(nc*golden_ratio)  ## Number of rows just calculated based on golden ratio.
+n &amp;lt;- nr*nc ## number of digits to be displayed on graph
+
+df_tidy_1 %&amp;gt;%
+  filter(pos &amp;lt; n) %&amp;gt;%
+  mutate(x = pos %% nc,
+         y = floor(pos / nc)) %&amp;gt;%
+  ggplot(aes(x=x, y=y, color=factor(cur))) +
+  #geom_point(shape=19, size=5) +
+  #geom_point(aes(shape=up_down_same)) +
+  geom_text(aes(label=cur, color=factor(cur)), family=&amp;quot;Helvetica&amp;quot;, size=5) +
+  scale_y_reverse() +
+  theme_void() +
+  scale_color_viridis_d(option=&amp;quot;magma&amp;quot;, begin=0.2, guide=&amp;quot;none&amp;quot;) +
+  scale_fill_viridis_d(option=&amp;quot;magma&amp;quot;, begin=0.2, guide=&amp;quot;none&amp;quot;) +
+  theme(panel.background = element_rect(fill=&amp;quot;#000000&amp;quot;)) #+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-13-visual-art-with-pi-using-ggplot2-circlize_files/figure-html/rect_art-1.png&#34; width=&#34;1056&#34; /&gt;&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;  #scale_shape_manual(values=c(25,23,24), guide=&amp;quot;none&amp;quot;)
+
+#ggsave(filename=str_c(&amp;quot;output/rect_&amp;quot;,n,&amp;quot;_digits_of_pi_as_dots.png&amp;quot;), width=11, height=11*golden_ratio)
+
+
+## Variation of Above
+df_tidy_1 %&amp;gt;%
+  filter(pos &amp;lt; n) %&amp;gt;%
+  mutate(x = pos %% nc,
+         y = floor(pos / nc),
+         odd = cur %% 2) %&amp;gt;%
+  ggplot(aes(x=x, y=y, color=factor(cur))) +
+  #geom_text(aes(label=cur, color=factor(cur)), family=&amp;quot;Helvetica&amp;quot;, size=3) +
+  geom_point(aes(shape=factor(odd)), size=5, alpha=0.9) +
+  scale_y_reverse() +
+  theme_void() +
+  scale_color_viridis_d(option=&amp;quot;magma&amp;quot;, begin=0.3, guide=&amp;quot;none&amp;quot;) +
+  scale_shape_manual(values=c(19,21), guide=&amp;quot;none&amp;quot;) +  ##24, 25 triangle
+  theme(panel.background = element_rect(fill=&amp;quot;#000000&amp;quot;)) &lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-13-visual-art-with-pi-using-ggplot2-circlize_files/figure-html/rect_art-2.png&#34; width=&#34;1056&#34; /&gt;&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;#ggsave(filename=str_c(&amp;quot;output/rect_first_&amp;quot;,n,&amp;quot;digits_of_pi_dots2.png&amp;quot;), height=11, width=11*golden_ratio)&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div id=&#34;creating-art-with-connecting-2-consective-digits-using-geom_segment&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Creating Art with connecting 2 consective digits using geom_segment&lt;/h2&gt;
+&lt;p&gt;This time, I wanted to utilize geom_segment to draw strings in the way that 2 consective digits are connected with strings. I love viridis palette especially magma palette, so I’ve stuck to same colour pallette for now, but I can definitely see I can play around with different colour palette.&lt;/p&gt;
+&lt;p&gt;For 2nd plot, I’ve also tried to see what would happen if I’ve placed plot on polar coordinate.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;n_string &amp;lt;- 10000 ## number of items i&amp;#39;ll show in graph
+
+df_tidy_1 %&amp;gt;%
+  filter(pos &amp;lt; n_string) %&amp;gt;%
+  mutate(x = cur + (pos/n_string) ,
+         xend = nxt_1 + (pos/n_string),
+         odd = cur %% 2) %&amp;gt;%
+  ggplot(aes(color=dig_4)) +  
+  geom_segment(aes(x=x, xend=xend, y=0,yend=1), size=0.05) +
+  scale_color_viridis_c(option=&amp;quot;magma&amp;quot;, guide=&amp;quot;none&amp;quot;, begin=0.2) + ## i like plasma too
+  theme_void() +
+  theme(panel.background = element_rect(fill=&amp;quot;#000000&amp;quot;)) &lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-13-visual-art-with-pi-using-ggplot2-circlize_files/figure-html/string_art-1.png&#34; width=&#34;1056&#34; /&gt;&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;#ggsave(file=&amp;quot;output/100K_strings_pi_art_plasma.png&amp;quot;, width=17, height=floor(17/golden_ratio))
+
+df_tidy_1 %&amp;gt;%
+  filter(pos &amp;lt; n_string) %&amp;gt;%
+  mutate(x = cur + (pos/n_string) ,
+         xend = nxt_1 + (pos/n_string)) %&amp;gt;%
+  ggplot(aes(color=dig_4)) +  
+  geom_segment(aes(x=x, xend=xend, y=0,yend=1), size=0.02) +
+  scale_color_viridis_c(option=&amp;quot;magma&amp;quot;, guide=&amp;quot;none&amp;quot;, begin=0.2) + ## i like plasma too
+  theme_void() +
+  theme(panel.background = element_rect(fill=&amp;quot;#000000&amp;quot;)) +
+  coord_polar(theta=&amp;quot;x&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-13-visual-art-with-pi-using-ggplot2-circlize_files/figure-html/string_art-2.png&#34; width=&#34;1056&#34; /&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;visualizing-with-circlize&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Visualizing with Circlize&lt;/h2&gt;
+&lt;p&gt;Using same colour schema I wanted to also try out plotting digits of pi with circo graph using &lt;a href=&#34;https://cran.r-project.org/web/packages/circlize/index.html&#34;&gt;circlize package&lt;/a&gt;. I love using &lt;a href=&#34;https://jokergoo.github.io/circlize_book/book/the-chorddiagram-function.html&#34;&gt;chordDiagram function&lt;/a&gt;! It’s amazing just few lines of code, I was able to produce pretty neat chart.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(circlize)
+magma_pal &amp;lt;- viridis::magma(n=10, begin=0.2)
+names(magma_pal) &amp;lt;- c(0,1,2,3,4,5,6,7,8,9) ## 
+
+
+par(bg = &amp;quot;#000000&amp;quot;,col=&amp;quot;#ffffff&amp;quot;)
+circos.par(start.degree = 90 )
+chordDiagram(df_tidy_1 %&amp;gt;% filter(pos&amp;lt;2000) %&amp;gt;% select(cur, nxt_1),
+             order = c(0:9),
+             grid.col=magma_pal, 
+             annotationTrack=c(&amp;quot;grid&amp;quot;,&amp;quot;name&amp;quot;),
+             directional = 1)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-13-visual-art-with-pi-using-ggplot2-circlize_files/figure-html/circlize_art-1.png&#34; width=&#34;1056&#34; /&gt;&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;#circos.clear()&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Environmental Performance Index - Simple Scatter Plot</title>
+      <link>/2018/10/05/environmental-performance-index-simple-scatter-plot/</link>
+      <pubDate>Fri, 05 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/2018/10/05/environmental-performance-index-simple-scatter-plot/</guid>
+      <description>&lt;p&gt;While reading the news that &lt;a href=&#34;https://www.theguardian.com/environment/2018/jul/12/ireland-becomes-worlds-first-country-to-divest-from-fossil-fuels&#34;&gt;Ireland becomes world’s first country to divest from fossil fuels&lt;/a&gt;, I just got curious how do we measure “green-ness” of country when we rank them in general, and I came across the &lt;a href=&#34;https://epi.envirocenter.yale.edu/epi-topline&#34;&gt;Environmental Performance Index&lt;/a&gt; page with ranking table.&lt;/p&gt;
+&lt;p&gt;Table contained 180 countries with some numerics values for Environment Performance Index, “Enviornmental Health”, “Ecosystem Vitality”.&lt;/p&gt;
+&lt;p&gt;I thought it would be interesting to plot them using ggplot2.&lt;/p&gt;
+&lt;p&gt;First I needed to get data, so I’ve used &lt;a href=&#34;https://github.com/hadley/rvest&#34;&gt;rvest&lt;/a&gt; and scaraped data from website into data frame.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(tidyverse)
+library(knitr)
+library(rvest)
+
+epi_2018_site &amp;lt;- read_html(&amp;quot;https://epi.envirocenter.yale.edu/epi-topline&amp;quot;)
+epi_2018_df &amp;lt;- epi_2018_site %&amp;gt;%
+  html_table() %&amp;gt;% as.data.frame()
+
+
+## Which Countries are the top 5 countries 
+epi_2018_df %&amp;gt;% arrange(EPI.Ranking) %&amp;gt;% head(n=5) %&amp;gt;% kable()&lt;/code&gt;&lt;/pre&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr class=&#34;header&#34;&gt;
+&lt;th align=&#34;left&#34;&gt;Country&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;EPI.Ranking&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;Environmental.Performance.Index&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;Environmental.Health&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;Ecosystem.Vitality&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;Switzerland&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;1&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;87.42&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;93.57&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;83.32&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;even&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;France&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;2&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;83.95&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;95.71&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;76.11&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;Denmark&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;3&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;81.60&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;98.20&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;70.53&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;even&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;Malta&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;4&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;80.90&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;93.80&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;72.30&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;Sweden&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;5&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;80.51&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;94.41&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;71.24&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;## Which Countries are the bottom 5?
+epi_2018_df %&amp;gt;% arrange(EPI.Ranking) %&amp;gt;% tail(n=5) %&amp;gt;% kable()&lt;/code&gt;&lt;/pre&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr class=&#34;header&#34;&gt;
+&lt;th&gt;&lt;/th&gt;
+&lt;th align=&#34;left&#34;&gt;Country&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;EPI.Ranking&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;Environmental.Performance.Index&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;Environmental.Health&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;Ecosystem.Vitality&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td&gt;176&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;Nepal&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;176&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;31.44&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;10.54&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;45.38&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;even&#34;&gt;
+&lt;td&gt;177&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;India&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;177&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;30.57&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;9.32&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;44.74&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td&gt;178&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;Dem. Rep. Congo&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;178&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;30.41&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;19.70&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;37.56&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;even&#34;&gt;
+&lt;td&gt;179&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;Bangladesh&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;179&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;29.56&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;11.96&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;41.29&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td&gt;180&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;Burundi&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;180&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;27.43&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;25.69&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;28.59&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;So when it comes to ranking in 2018, Top 5 countries are 1. Switzlerland, 2. France, 3. Denmark, 4. Malta, 5. Sweden. Bottom 5 countries for 2018 are , 180. Burundi, 179. Bangladesh, 178. Dem. Rep.Congo, 177. India, 176. Nepal.&lt;/p&gt;
+&lt;p&gt;I now wanted to plot them as scatter plot, with x-axis with Environmental Health score, and y-axis with Ecosystem Vitality score. I’ve coloured dots with Environmental Performance Index.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(hrbrthemes) ## I love this theme for ggplot! 
+library(ggrepel) ## so that text don&amp;#39;t overlap
+
+
+epi_2018_df %&amp;gt;% 
+  arrange(EPI.Ranking) %&amp;gt;%
+  ggplot(aes(x=Environmental.Health , y= Ecosystem.Vitality)) +
+  geom_point(aes(color=Environmental.Performance.Index)) +
+  geom_path(size=0.2, color=&amp;quot;#33333390&amp;quot;, linetype=3)+
+  scale_color_viridis_c(name=&amp;quot;EPI&amp;quot;) +
+  theme_ipsum_rc() +
+  geom_smooth(method=&amp;quot;lm&amp;quot;, se=F, color=&amp;quot;#33333330&amp;quot;) +
+  geom_text_repel(aes(label=paste0(EPI.Ranking,&amp;quot;.&amp;quot;,Country)), data = . %&amp;gt;% filter(EPI.Ranking&amp;lt;=10|EPI.Ranking&amp;gt;=170|Country %in% c(&amp;quot;Canada&amp;quot;,&amp;quot;United States of America&amp;quot;,&amp;quot;Japan&amp;quot;,&amp;quot;Ireland&amp;quot;)),
+            family=&amp;quot;Roboto Condensed&amp;quot;, min.segment.length=0) +
+  labs(title = &amp;quot;Environmental Health vs Ecosystem Vitality&amp;quot;,
+       subtitle = &amp;quot;Environmental Health = Rises with Economic Growth &amp;amp; Prosperity\nEcosystem Vitality = Comes Under Strain from Industrialization &amp;amp; Urbanization&amp;quot;,
+       caption = &amp;quot;Data from https://epi.envirocenter.yale.edu/epi-topline&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-05-environmental-performance-index-simple-scatter-plot_files/figure-html/unnamed-chunk-2-1.png&#34; width=&#34;1056&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;I’ve labeled top 10 countries, and bottom 10 countries, also US, Canada and Japan. US was only ranked at 27th, which I thought was quite low, Japan was higher than US, at 20th. I was also surprised that canada is also lower at 25th.&lt;/p&gt;
+&lt;p&gt;Using &lt;a href=&#34;https://cran.r-project.org/web/packages/countrycode/index.html&#34;&gt;countrycode&lt;/a&gt; package, I wanted to append extra information about country, such as “Continent” and “Region”.&lt;/p&gt;
+&lt;p&gt;I’ve coloured plot with “continent” to see if there’s a cluster…&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(countrycode)
+library(ggalt)
+
+epi_2018_df &amp;lt;- epi_2018_df %&amp;gt;% 
+  mutate(continent = countrycode(Country ,&amp;quot;country.name&amp;quot;, &amp;quot;continent&amp;quot;, warn=F),
+         country_code = countrycode(Country, &amp;quot;country.name&amp;quot;, &amp;quot;iso3c&amp;quot;,nomatch = &amp;quot;&amp;quot;),
+         region = countrycode(Country, &amp;quot;country.name&amp;quot;, &amp;quot;region&amp;quot;, warn=F))
+
+epi_2018_df &amp;lt;- epi_2018_df %&amp;gt;%
+  mutate(detail_url = paste0(&amp;quot;https://epi.envirocenter.yale.edu/epi-country-report/&amp;quot;,country_code))
+
+## Micronesia didn&amp;#39;t get categorized...
+
+epi_2018_df %&amp;gt;% 
+  ggplot(aes(x=Environmental.Health , y= Ecosystem.Vitality, color=continent)) +
+  geom_point(aes(color=continent), size=3, alpha=0.6) +
+  geom_encircle(na.rm=T, s_shape=1, linetype=3, alpha=0.6) +
+  scale_color_viridis_d(name=&amp;quot;Continent&amp;quot;, na.value=&amp;quot;grey&amp;quot;, option=&amp;quot;A&amp;quot;, end=0.9) +
+  geom_rug(alpha=0.3) +
+  theme_ipsum_rc() +
+  geom_text_repel(aes(label=paste0(EPI.Ranking,&amp;quot;.&amp;quot;,Country)),
+            family=&amp;quot;Roboto Condensed&amp;quot;, min.segment.length=0, size=2, 
+            color=&amp;quot;#00000090&amp;quot;, segment.colour = &amp;quot;#33333350&amp;quot;) +
+  labs(title = &amp;quot;Environmental Health vs Ecosystem Vitality&amp;quot;,
+       subtitle = &amp;quot;Colour = Continent&amp;quot;) +
+  scale_x_continuous(breaks=round(fivenum(epi_2018_df$Environmental.Health),1)) +
+  scale_y_continuous(breaks=round(fivenum(epi_2018_df$Ecosystem.Vitality),1))&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-05-environmental-performance-index-simple-scatter-plot_files/figure-html/unnamed-chunk-3-1.png&#34; width=&#34;1056&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;After I’ve done the above, I realized there are actually &lt;a href=&#34;https://epi.envirocenter.yale.edu/epi-downloads&#34;&gt;Downloads&lt;/a&gt; section on EPI with more data… So I actually didn’t have to scape the website table, nor code the region using countrycode.&lt;/p&gt;
+&lt;p&gt;I’ve decided to download 2018 EPI Country Snapshot for now. This table contains 12 variables for 180 countries, with stats like GDP, GDP per Capita, Land Area, Population, Popular Density, Population Growth Rate and SDGI (I’m not sure what SDGI is, and I couldn’t figure out from browsing through the web…)&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-05-environmental-performance-index-simple-scatter-plot_files/figure-html/countrysnapshot-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;While I know EPI, Environmental Health, and Ecosystem Vitality should be correlated, it’s interesing that EPI and GDP per Capiata is correlated strongly. So I’ve decided to create another scatter plot showing that relationship.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;epi_2018_df_comb %&amp;gt;%
+  ggplot(aes(x=GDPpc, y=Environmental.Performance.Index )) +
+  geom_point(aes(color=PopDensity)) +
+  theme_ipsum_rc() +
+  geom_smooth(se=F, method=&amp;quot;lm&amp;quot;, color=&amp;quot;#33333330&amp;quot;) +
+  scale_x_comma() +
+  scale_color_viridis_c(trans=&amp;quot;log10&amp;quot;) +
+  geom_text_repel(aes(label=country), 
+                  data = . %&amp;gt;% filter(GDPpc &amp;gt; 60000 | Environmental.Performance.Index &amp;gt; 80 | 
+                    country %in% c(&amp;quot;United States of America&amp;quot;,&amp;quot;Japan&amp;quot;,&amp;quot;Canada&amp;quot;,&amp;quot;India&amp;quot;,&amp;quot;China&amp;quot;)),
+                  family=&amp;quot;Roboto Condensed&amp;quot;, min.segment.length = 0, nudge_x=10) +
+  labs(title=&amp;quot;GDP per Capita vs EPI&amp;quot;,
+       caption = &amp;quot;Data Source: https://epi.envirocenter.yale.edu/epi-downloads&amp;quot;,
+       xlab =&amp;quot;GDP per Capita - 2018&amp;quot;, ylab=&amp;quot;Environmental Performance Index&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-05-environmental-performance-index-simple-scatter-plot_files/figure-html/epi_and_gdp_per_capita-1.png&#34; width=&#34;1056&#34; /&gt;&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Making Calendar with ggplot &#43; Moon Phase Calendar for fun</title>
@@ -17,8 +614,199 @@
       <pubDate>Sat, 26 May 2018 00:00:00 +0000</pubDate>
       
       <guid>/2018/05/26/making-calendar-with-ggplot-moon-phase-calendar/</guid>
-      <description>Making Calendar with ggplot2 I recently discovered font called Moon Phase. I also recently discovered R package, suncalc, and I can get Moon Illumination data by day, so I thought I’d use both to create a simple calendar using ggplot2.
-Prepping The Data To make calendar, I need to strip out weekday, month, day, week number within a month. So I can use weekday as x-axis, week number within a month as y-axis, and facet by month.</description>
+      <description>&lt;div id=&#34;making-calendar-with-ggplot2&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Making Calendar with ggplot2&lt;/h2&gt;
+&lt;p&gt;I recently discovered font called &lt;a href=&#34;https://www.dafont.com/moon-phases.font&#34;&gt;Moon Phase&lt;/a&gt;. I also recently discovered R package, &lt;a href=&#34;https://CRAN.R-project.org/package=suncalc&#34;&gt;suncalc&lt;/a&gt;, and I can get Moon Illumination data by day, so I thought I’d use both to create a simple calendar using &lt;a href=&#34;http://ggplot2.tidyverse.org/&#34;&gt;ggplot2&lt;/a&gt;.&lt;/p&gt;
+&lt;div id=&#34;prepping-the-data&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Prepping The Data&lt;/h3&gt;
+&lt;p&gt;To make calendar, I need to strip out weekday, month, day, week number within a month. So I can use weekday as x-axis, week number within a month as y-axis, and facet by month.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;## use getMoonIllusmination function to get moon fraction, phase, and angle for 2018.
+Moon_2018 &amp;lt;-getMoonIllumination(date = seq.Date(as.Date(&amp;quot;2018-01-01&amp;quot;), as.Date(&amp;quot;2018-12-31&amp;quot;), by = 1), 
+                                 keep = c(&amp;quot;fraction&amp;quot;, &amp;quot;phase&amp;quot;, &amp;quot;angle&amp;quot;))
+
+
+## Append Extra Info, so I can use ggplot to make calendar. 
+Moon_2018_df &amp;lt;- Moon_2018 %&amp;gt;% 
+  mutate(wkdy = fct_inorder(weekdays(date, abbreviate=T)), ## 2018 worked well because it starts on Monday
+         wkn = week(date), ## Week Number
+         mo = month(date, label=T, abbr=T), ## Month
+         day = day(date), ## Day
+         moon.phase = cut(#phase,breaks=seq(0,1,by=1/28), ## this doesn&amp;#39;t work...
+                          phase,breaks=seq(0,1,by=1/56),
+                          ordered_result=T)) %&amp;gt;%
+  group_by(mo) %&amp;gt;% 
+  mutate(wkn.mo = dense_rank(wkn)) %&amp;gt;%
+  ungroup()
+
+## Simply cutting into 28 blocks didn&amp;#39;t work out..  
+moon.font.tb &amp;lt;- tibble(
+  moon.font = c(NA, letters[rep(1:13,rep(2,13))], 0,0, letters[rep(14:26,rep(2,13))],NA),
+  moon.phase = levels(Moon_2018_df$moon.phase)
+)
+
+Moon_2018_df &amp;lt;- Moon_2018_df %&amp;gt;% left_join(moon.font.tb)
+
+## Show the data around today to see what data above looks like.
+Moon_2018_df %&amp;gt;% filter(between(date,today()-3,today()+3)) %&amp;gt;% kable()&lt;/code&gt;&lt;/pre&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr class=&#34;header&#34;&gt;
+&lt;th align=&#34;left&#34;&gt;date&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;fraction&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;phase&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;angle&lt;/th&gt;
+&lt;th align=&#34;left&#34;&gt;wkdy&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;wkn&lt;/th&gt;
+&lt;th align=&#34;left&#34;&gt;mo&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;day&lt;/th&gt;
+&lt;th align=&#34;left&#34;&gt;moon.phase&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;wkn.mo&lt;/th&gt;
+&lt;th align=&#34;left&#34;&gt;moon.font&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;2018-05-23&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.5928637&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.2797321&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-1.1692842&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;Wed&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;21&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;May&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;23&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;(0.268,0.286]&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;4&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;h&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;even&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;2018-05-24&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.7013470&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.3159631&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-1.1353234&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;Thu&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;21&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;May&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;24&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;(0.304,0.321]&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;4&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;i&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;2018-05-25&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.7972031&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.3513064&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-1.1143088&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;Fri&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;21&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;May&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;25&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;(0.339,0.357]&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;4&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;j&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;even&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;2018-05-26&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.8764075&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.3856523&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-1.1008454&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;Sat&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;21&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;May&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;26&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;(0.375,0.393]&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;4&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;k&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;2018-05-27&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.9364869&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.4189058&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-1.0823715&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;Sun&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;21&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;May&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;27&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;(0.411,0.429]&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;4&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;l&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;even&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;2018-05-28&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.9763419&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.4508451&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-1.0183864&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;Mon&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;22&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;May&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;28&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;(0.446,0.464]&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;5&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;m&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;2018-05-29&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.9959399&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.4797038&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-0.6465735&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;Tue&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;22&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;May&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;29&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;(0.464,0.482]&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;5&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;m&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&#34;just-simple-calendar&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Just Simple Calendar&lt;/h2&gt;
+&lt;p&gt;First I just made simple calendar with below code.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;##  Here&amp;#39;s Just Calendar Part
+Moon_2018_df %&amp;gt;% ggplot(aes(x=wkdy, y=wkn.mo)) + 
+  geom_point(alpha=0.3, aes(color=wkdy), size=8) + 
+  geom_text(aes(label=day),family=&amp;quot;Roboto Condensed&amp;quot;) +
+  facet_wrap(~mo, scales=&amp;quot;free_x&amp;quot;, ncol=3) +  ## So that Each Line is Quarter!
+  scale_x_discrete() +
+  scale_y_reverse(breaks=NULL) +
+  scale_colour_viridis_d(guide=&amp;quot;none&amp;quot;) +
+  theme_ipsum_rc() +
+  labs(title=&amp;quot;2018&amp;quot;, x=&amp;quot;Start of week is Monday&amp;quot;, y=&amp;quot;&amp;quot;) +
+  expand_limits(y=c(0.5,6.5)) &lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-05-26-making-calendar-with-ggplot-moon-phase-calendar_files/figure-html/simple_calendar-1.png&#34; width=&#34;1056&#34; /&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;moon-phase-calendar&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Moon Phase Calendar&lt;/h2&gt;
+&lt;p&gt;This time, I tried using geom_tile function to create tiles. I’ve coloured sell using fraction (illuminated fraction of the moon). 0 is New Moon, and 1 is Full Moon. When it’s Full moon sky is lighter, so I’ve coloured cell little bit lighter.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;Moon_2018_df %&amp;gt;% ggplot(aes(x=wkdy, y=wkn.mo)) + 
+  geom_tile(alpha=0.8, aes(fill=fraction)) + 
+  geom_text(aes(label=paste0(&amp;quot; &amp;quot;,day)),size=3,family=&amp;quot;Roboto Condensed&amp;quot;,hjust=0, color=&amp;quot;white&amp;quot;) +
+  geom_text(aes(label=moon.font), family=&amp;quot;Moon Phases&amp;quot;, hjust=1, color=&amp;quot;white&amp;quot;, size=5) +
+  facet_wrap(~mo, scales=&amp;quot;free_x&amp;quot;, ncol=3) +  ## So that Each Line is Quarter!
+  scale_x_discrete() +
+  scale_y_reverse(breaks=NULL) +
+  scale_fill_viridis_c(name=&amp;quot;Moon Illumination&amp;quot;, option=&amp;quot;inferno&amp;quot;,  begin=0, end=0.25, guide=&amp;quot;none&amp;quot;) +  ## so that sky is darkest when there&amp;#39;s new moon
+  theme_ipsum_rc() +
+  labs(title=&amp;quot;2018 Moon Phase Calendar&amp;quot;, x=&amp;quot;Start of week is Monday&amp;quot;, y=&amp;quot;&amp;quot;) +
+  expand_limits(y=c(0.5,6.5)) +
+  theme(legend.position=&amp;quot;top&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-05-26-making-calendar-with-ggplot-moon-phase-calendar_files/figure-html/moon_phase_calendar-1.png&#34; width=&#34;1056&#34; /&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;yet-another-calendar&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Yet Another Calendar&lt;/h2&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;Moon_2018_df %&amp;gt;% 
+  ggplot(aes(x=day, y=fct_rev(mo))) + 
+  theme_minimal(base_family=&amp;quot;Roboto Condensed&amp;quot;) + 
+  scale_x_continuous(breaks=c(1:31), position=&amp;quot;top&amp;quot;) +
+  geom_text(aes(label=moon.font, color=fraction),family=&amp;quot;Moon Phases&amp;quot;, hjust=0.5, vjust=0.5, size=8, alpha=0.5) +
+  geom_text(aes(label=paste0(day,&amp;quot;\n&amp;quot;,wkdy)), family=&amp;quot;Roboto Condensed&amp;quot;, lineheight=0.8, size=4) + 
+  labs(x=&amp;quot;&amp;quot;, y=&amp;quot;&amp;quot;, title=&amp;quot;Another Type of Calendar&amp;quot;) +
+  scale_color_viridis_c()+
+  theme(legend.position=&amp;quot;bottom&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-05-26-making-calendar-with-ggplot-moon-phase-calendar_files/figure-html/moon_phase_calender2-1.png&#34; width=&#34;1056&#34; /&gt;&lt;/p&gt;
+&lt;/div&gt;
+</description>
     </item>
     
     <item>
@@ -27,9 +815,106 @@ Prepping The Data To make calendar, I need to strip out weekday, month, day, wee
       <pubDate>Sun, 20 May 2018 00:00:00 +0000</pubDate>
       
       <guid>/2018/05/20/16-personalities-with-circizle/</guid>
-      <description>16 Personalities While back, my husband introduced me to this fun online personalities test called 16 personalities. I’ve taken the test, and my personalities type came back as Mediator (Code: INFP - Role: Diplomat)
-There were difinitely some traits that sounded like me, and a lot of statement I can relate for sure. It’s definitely some fun test to do.
-There was a one part that stated “INFP - compromising just 4% of the population”.</description>
+      <description>&lt;div id=&#34;personalities&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;16 Personalities&lt;/h2&gt;
+&lt;p&gt;While back, my husband introduced me to this fun online personalities test called &lt;a href=&#34;https://www.16personalities.com/&#34;&gt;16 personalities&lt;/a&gt;. I’ve taken the test, and my personalities type came back as &lt;a href=&#34;https://www.16personalities.com/profiles/7c275e8db32f5&#34;&gt;Mediator&lt;/a&gt; (Code: INFP - Role: Diplomat)&lt;/p&gt;
+&lt;p&gt;There were difinitely some traits that sounded like me, and a lot of statement I can relate for sure. It’s definitely some fun test to do.&lt;/p&gt;
+&lt;p&gt;There was a one part that stated “INFP - compromising just 4% of the population”. This read me to think which traits are more popular than the others, but so far I haven’t found details on population breakdown. Later if I do find population breakdown of personalities trait, then I thought it would be interesting to make the plot proportional to the ratio.&lt;/p&gt;
+&lt;p&gt;Anyways, I thought I’d get all 16 personalities and plot them using &lt;a href=&#34;https://jokergoo.github.io/circlize_book/book/&#34;&gt;circlize&lt;/a&gt; package as practice. The documentation on circlize was extremely helpful to get me started!&lt;/p&gt;
+&lt;p&gt;Below is the code I wrote for now, so I can remember what I have done in case I want to utilize circlize packages.&lt;/p&gt;
+&lt;div id=&#34;heres-snippets-of-code-ive-used-to-create-above.&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Here’s snippets of code I’ve used to create above.&lt;/h3&gt;
+&lt;p&gt;First I’ve used package &lt;a href=&#34;https://CRAN.R-project.org/package=rvest&#34;&gt;rvest&lt;/a&gt; to get some data about all 16 personalities.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;## Get 16 Different Personalities from 16 Personalities Website
+personalities &amp;lt;-read_html(&amp;quot;https://www.16personalities.com/personality-types&amp;quot;)
+
+per.df &amp;lt;- tibble(
+  type = personalities %&amp;gt;% html_nodes(&amp;quot;.type-item h4&amp;quot;) %&amp;gt;% 
+    html_text() %&amp;gt;% gsub(pattern=&amp;quot;(“|”)&amp;quot;,replacement=&amp;quot;&amp;quot;),
+  type.code = personalities %&amp;gt;% html_nodes(&amp;quot;h5&amp;quot;) %&amp;gt;% html_text(),
+  short.descr = personalities %&amp;gt;% html_nodes(&amp;quot;.type-snippet&amp;quot;) %&amp;gt;% html_text(),
+  img = personalities %&amp;gt;% html_nodes(&amp;quot;.type-item img&amp;quot;) %&amp;gt;% html_attr(&amp;quot;src&amp;quot;)
+)
+
+## Add few more details to table.
+per.df &amp;lt;- per.df %&amp;gt;% mutate(type.code=substr(type.code,1,4), mind=substr(type.code,1,1),
+                            energy = substr(type.code,2,2), nature = substr(type.code,3,3),
+                            tactic = substr(type.code,4,4))
+
+## There are 4 &amp;quot;Roles&amp;quot; based on followig rules ## I only really recently discovered case_when statment! 
+### case_when statement is amazing! I&amp;#39;ve been writing crazy nested ifelse statement till very recently.
+per.df &amp;lt;- per.df %&amp;gt;% mutate(roles = case_when(
+  str_detect(.$type.code,&amp;quot;.NT.&amp;quot;) ~ &amp;quot;Analyst&amp;quot;,
+  str_detect(.$type.code,&amp;quot;.NF.&amp;quot;) ~ &amp;quot;Diplomat&amp;quot;,
+  str_detect(.$type.code,&amp;quot;.S.J&amp;quot;) ~ &amp;quot;Sentinels&amp;quot;,
+  str_detect(.$type.code,&amp;quot;.S.P&amp;quot;) ~ &amp;quot;Explorers&amp;quot;
+))&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&#34;here-comes-exciting-drawing-with-circlize-package&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Here comes exciting drawing with circlize package!&lt;/h2&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;circos.clear() 
+circos.par(start.degree=90)
+
+## initialize
+circos.initialize(factor=per.df$type, xlim=c(0,1))
+
+## Layout basic tracks
+circos.track(ylim=c(0,1), 
+             panel.fun = function(x,y){
+               circos.text(x=CELL_META$xcenter, y=CELL_META$ycenter,
+                           labels=CELL_META$sector.index,
+                           facing = &amp;quot;inside&amp;quot;, 
+                           niceFacing= TRUE, font=2)
+             })
+
+## I definitely think there&amp;#39;s better way to write below....  
+## But at the moment, I&amp;#39;m building it section by section...
+highlight.sector(per.df$type[1:4], 
+                 track.index = 1, 
+                 text = per.df$roles[1],
+                 facing = &amp;quot;bending.inside&amp;quot;, niceFacing = TRUE, 
+                 text.vjust = &amp;quot;15mm&amp;quot;, cex = 1.5, col=&amp;quot;#734C5F60&amp;quot;)
+
+highlight.sector(per.df$type[5:8], 
+                 track.index = 1, 
+                 text = per.df$roles[5],
+                 facing = &amp;quot;bending.inside&amp;quot;, niceFacing = TRUE, 
+                 text.vjust = &amp;quot;15mm&amp;quot;, cex = 1.5, col=&amp;quot;#728D5660&amp;quot;)
+
+
+highlight.sector(per.df$type[9:12], 
+                 track.index = 1, 
+                 text = per.df$roles[9],
+                 facing = &amp;quot;bending.inside&amp;quot;, niceFacing = TRUE, 
+                 text.vjust = &amp;quot;15mm&amp;quot;, cex = 1.5, col=&amp;quot;#51A9AB60&amp;quot;)
+
+
+highlight.sector(per.df$type[13:16], 
+                 track.index = 1, 
+                 text = per.df$roles[13],
+                 facing = &amp;quot;bending.inside&amp;quot;, niceFacing = TRUE, 
+                 text.vjust = &amp;quot;15mm&amp;quot;, cex = 1.5, col=&amp;quot;#E5C82E60&amp;quot;)
+
+###  Now the inner track.  I want to place images.
+circos.track(ylim=c(0,1), 
+             panel.fun = function(x,y){
+               circos.raster(image=image_read(per.df$img[CELL_META$sector.numeric.index]),
+                             x=CELL_META$xcenter, y=CELL_META$ycenter, 
+                             width=&amp;quot;2.5cm&amp;quot;, facing = &amp;quot;inside&amp;quot;, niceFacing=TRUE)
+             },bg.border = NA, track.height=0.3)
+
+## Place another track with type code.
+circos.track(ylim=c(0,1), 
+             panel.fun = function(x,y){
+               circos.text(x=CELL_META$xcenter, y=CELL_META$ycenter,
+                           labels=per.df$type.code[CELL_META$sector.numeric.index],
+                           facing = &amp;quot;inside&amp;quot;, 
+                           niceFacing= TRUE)
+             },bg.border = NA , track.height=0.15)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-05-20-16-personalities-with-circizle_files/figure-html/fun_stuff-1.png&#34; width=&#34;864&#34; /&gt;&lt;/p&gt;
+&lt;/div&gt;
+</description>
     </item>
     
     <item>
@@ -38,8 +923,27 @@ There was a one part that stated “INFP - compromising just 4% of the populatio
       <pubDate>Sun, 20 May 2018 00:00:00 +0000</pubDate>
       
       <guid>/2018/05/20/daylight-time-in-vancouver-canada-vs-tokyo-japan/</guid>
-      <description>I currently live in British Columbia, Canada. So I live above 49th parallel line. One of things that’s pretty awesome living up north is the fact you get so much longer daylights in summer time! Currently it’s May, and I’m just in love with longer daylight we are getting day by day (well till June 21st)!
-Recently I came across R package called suncalc, so I had to try out using the package to pull the timetable for sunrise &amp;amp; sunset for different locations and visualize the result using ggplot2.</description>
+      <description>&lt;p&gt;I currently live in British Columbia, Canada. So I live above 49th parallel line. One of things that’s pretty awesome living up north is the fact you get so much longer daylights in summer time! Currently it’s May, and I’m just in love with longer daylight we are getting day by day (well till June 21st)!&lt;/p&gt;
+&lt;p&gt;Recently I came across R package called &lt;a href=&#34;https://CRAN.R-project.org/package=suncalc&#34;&gt;suncalc&lt;/a&gt;, so I had to try out using the package to pull the timetable for sunrise &amp;amp; sunset for different locations and visualize the result using &lt;a href=&#34;http://ggplot2.tidyverse.org/&#34;&gt;ggplot2&lt;/a&gt;.&lt;/p&gt;
+&lt;div id=&#34;vancouver-2018-daylight-visualized&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;🇨🇦 Vancouver 2018 Daylight Visualized ☀️&lt;/h2&gt;
+&lt;p&gt;For &lt;strong&gt;Vancouver&lt;/strong&gt; - I used coordinate 49.2827° N, 123.1207° W 🌎&lt;/p&gt;
+&lt;p&gt;I’ve coloured nighttime with dark blue colour, while I’ve coloured day time with light yellow-ish colour using &lt;a href=&#34;http://ggplot2.tidyverse.org/reference/geom_ribbon.html&#34;&gt;geom_ribbon&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;The latest sunset Vancouver will observe is June 25th! It’s not same as the longest daylight. Earliest I’d have to wake up to catch sunrise is June 16th at 5:07am. 😀&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-05-20-daylight-time-in-vancouver-canada-vs-tokyo-japan_files/figure-html/vancouver-1.png&#34; width=&#34;1056&#34; /&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;tokyo-2018-daylight-visualized&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;🇯🇵 Tokyo 2018 Daylight Visualized ☀️&lt;/h2&gt;
+&lt;p&gt;For &lt;strong&gt;Tokyo&lt;/strong&gt; - I used coordinate 35.6895° N, 139.6917° E 🌏&lt;/p&gt;
+&lt;p&gt;Japan does not practice daylight savings, so there’s no glitch in March and November, the line is smooth in below chart. The earliest sunrise Tokyo gets is 4:26am on June 13th. This makes me think Japan could actually benefit from practiving daylight savings, so that sunrise is delayed till 5:26am, while they can enjoy the sun as late as 8pm in June!&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-05-20-daylight-time-in-vancouver-canada-vs-tokyo-japan_files/figure-html/tokyo-1.png&#34; width=&#34;1056&#34; /&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;sunrise-sunset-time-compared-for-vancouver-and-tokyo&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Sunrise &amp;amp; Sunset Time Compared for Vancouver and Tokyo�&lt;/h2&gt;
+&lt;p&gt;And here’s sunrise &amp;amp; sunset time compared against two cities.&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-05-20-daylight-time-in-vancouver-canada-vs-tokyo-japan_files/figure-html/vantokyo-1.png&#34; width=&#34;1056&#34; /&gt;&lt;/p&gt;
+&lt;/div&gt;
+</description>
     </item>
     
     <item>
@@ -48,9 +952,40 @@ Recently I came across R package called suncalc, so I had to try out using the p
       <pubDate>Sat, 19 May 2018 00:00:00 +0000</pubDate>
       
       <guid>/2018/05/19/testing-entry-with-r-rmarkdown-file/</guid>
-      <description>Hello! World! Just figuring out how the blog post works with this random set of coffee data!
- Espresso Drinks Visualized with ggplot2 Pie Chart Pie chart can be created with using polar coordinate.
-## Pie Chart coffee_long %&amp;gt;% ggplot() + geom_bar(aes(x=sqrt(total.amount)/2, y = amount, fill=fct_rev(ingredient.f), width=sqrt(total.amount)), stat=&amp;quot;identity&amp;quot;, position=&amp;quot;fill&amp;quot;) + facet_wrap(~name2, ncol=4) + geom_text(aes(x=sqrt(total.amount), y=Inf, label=&amp;quot;&amp;quot;), size=7) + theme_void(base_family=&amp;quot;Roboto Condensed&amp;quot;) + coord_polar(theta=&amp;quot;y&amp;quot;) + scale_fill_hue(name=&amp;quot;Ingredient&amp;quot;, l=80) + theme(legend.position=&amp;quot;top&amp;quot;)  Espresso Drinks Visualized with ggplot2 Bar Chart ## Bar Chart coffee_long %&amp;gt;% ggplot() + geom_bar(aes(x=3, y = amount, fill=fct_rev(ingredient.</description>
+      <description>&lt;div id=&#34;hello-world&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Hello! World!&lt;/h2&gt;
+&lt;p&gt;Just figuring out how the blog post works with this random set of coffee data!&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;espresso-drinks-visualized-with-ggplot2-pie-chart&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Espresso Drinks Visualized with ggplot2 Pie Chart&lt;/h2&gt;
+&lt;p&gt;Pie chart can be created with using polar coordinate.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;## Pie Chart
+coffee_long  %&amp;gt;% ggplot() +
+  geom_bar(aes(x=sqrt(total.amount)/2, y = amount, 
+               fill=fct_rev(ingredient.f), width=sqrt(total.amount)), 
+           stat=&amp;quot;identity&amp;quot;, position=&amp;quot;fill&amp;quot;) + 
+  facet_wrap(~name2, ncol=4) +
+  geom_text(aes(x=sqrt(total.amount), y=Inf, label=&amp;quot;&amp;quot;), size=7) +
+  theme_void(base_family=&amp;quot;Roboto Condensed&amp;quot;) +
+  coord_polar(theta=&amp;quot;y&amp;quot;) +
+  scale_fill_hue(name=&amp;quot;Ingredient&amp;quot;, l=80) +
+  theme(legend.position=&amp;quot;top&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-05-19-testing-entry-with-r-rmarkdown-file_files/figure-html/coffee_piechart-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;espresso-drinks-visualized-with-ggplot2-bar-chart&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Espresso Drinks Visualized with ggplot2 Bar Chart&lt;/h2&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;## Bar Chart
+
+coffee_long  %&amp;gt;% ggplot() +
+  geom_bar(aes(x=3, y = amount, fill=fct_rev(ingredient.f), width=sqrt(total.amount)/2),
+           stat=&amp;quot;identity&amp;quot;, position=&amp;quot;stack&amp;quot;) + 
+  facet_wrap(~name2, ncol=4) +
+  theme_void(base_family=&amp;quot;Roboto Condensed&amp;quot;) +
+  scale_fill_hue(name=&amp;quot;Ingredient&amp;quot;, l=80) +
+  theme(legend.position=&amp;quot;top&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-05-19-testing-entry-with-r-rmarkdown-file_files/figure-html/coffee_barchart-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;/div&gt;
+</description>
     </item>
     
   </channel>
