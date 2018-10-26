@@ -1,0 +1,226 @@
+---
+title: Popular Halloween Candy on US State Grid Map
+author: Chisato
+date: '2018-10-25'
+slug: popular-halloween-candy-on-us-state-grid-map
+categories:
+  - R
+tags:
+  - ggplot2
+  - rvest
+  - geofacet
+  - jsonlite
+description: ''
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+
+
+<div id="halloween-is-coming.." class="section level2">
+<h2>Halloween is coming..!</h2>
+<p>Halloween is just around the corner, I am still trying to decide which candies to purchase this year for trick-or-treaters.</p>
+<p>Initially I was looking for data sets maybe comparing American chocolate bars vs Canadian chocolate bars possibly with sugar contents or lists of ingredients. I am really curious why there are big differences in candy between Canada and US, but for now I couldn’t find them instead I came across below data sets.</p>
+<p>Data itself is actually bit outdated, since it’s data from candy sales in 2007-2015. I’m not even sure if these popular candies changes every year or not. Now I’m curious to find data sets that are more recent…<br />
+<a href="https://public.opendatasoft.com/explore/embed/dataset/state-by-state-favorite-halloween-candy/table/">CandyStore.com’s sales from 2007–2015—focusing on the three months leading up to Halloween</a></p>
+<p>Since data set contains data at state level for US, I decided I’ll practice plotting the data on grid map, I’ve been wanting to try. To colour the map, I’ve decided instead of colouring by volume of candy purchased (in pounds), I’ve gathered population by state in order to figure out ratio of candy per person.</p>
+<p>Looks like Hawaiian eats lots of Hershey Kisses (or in general, maybe there are more sweet tooth in Hawaii!). Utah, Nevada and Arizona also seems to maybe either consumer more sweets or possibly top ranked chocolates are purchased in volume!</p>
+<div class="figure">
+<img src="/post/2018-10-25-popular-halloween-candy-on-us-state-grid-map_files/popular_candy_by_state.png" />
+
+</div>
+<p>It would’ve been fun to gather all candy images and place them in the grid too…!</p>
+<p>Below are the steps I took to visualize the data.</p>
+</div>
+<div id="importing-data-tidying-up" class="section level2">
+<h2>Importing Data &amp; Tidying Up</h2>
+<p>I’ve imported data to dataframe using <a href="https://cran.r-project.org/web/packages/jsonlite/index.html">jsonlite</a> package using fromJSON function from <a href="https://public.opendatasoft.com/explore/?sort=modified">OpenDataSoft site</a>. There seems to be lots of other interesting data sets!</p>
+<p>I’ve also harvested population by state from Wikipedia using <a href="https://cran.r-project.org/web/packages/rvest/">rvest</a> package.</p>
+<pre class="r"><code>library(tidyverse) ## basically tidyverse is needed for everything :)
+library(jsonlite) ## to read data in json format
+library(rvest) ## to scrape website
+library(hrbrthemes) ## I love this themes! 
+## read this: https://cran.r-project.org/web/packages/hrbrthemes/vignettes/why_hrbrthemes.html
+library(geofacet)  ## I&#39;ll use the grid in this package to create
+library(ggrepel) ## so that texts on ggplot don&#39;t overlap!
+library(janitor) ##  My recent favourite
+
+## Download Candy Data from Opendata Soft site.
+candy_data &lt;- jsonlite::fromJSON(&quot;https://public.opendatasoft.com/api/records/1.0/search/?rows=51&amp;start=0&amp;fields=name,top_candy,top_candy_pounds,2nd_place,2nd_place_pounds,3rd_place,3rd_place_pounds&amp;dataset=state-by-state-favorite-halloween-candy&amp;timezone=America%2FLos_Angeles&quot;)
+
+
+## I&#39;ll call this candy_wide, because data is in wide format.
+candy_wide &lt;-candy_data$records$fields
+names(candy_wide) &lt;- c(&quot;state&quot;,&quot;rank_3&quot;,&quot;pound_2&quot;,&quot;rank_2&quot;,&quot;pound_3&quot;,&quot;rank_1&quot;,&quot;pound_1&quot;)
+
+
+## Might be interesting to see Volume per Capita, so get population data from Wiki.
+state_pop_html &lt;- 
+  read_html(&quot;https://simple.wikipedia.org/wiki/List_of_U.S._states_by_population&quot;) %&gt;% 
+  html_table(2)
+state_pop_html &lt;- state_pop_html[[2]] 
+
+## I&#39;m only really interested in population, so trim down the table bit.
+state_pop &lt;- state_pop_html %&gt;% select(state=3, pop_2016=4)
+
+## I want population to be numeric value instead of character
+state_pop &lt;- state_pop %&gt;% mutate(pop_2016 = as.numeric(str_remove_all(pop_2016,&quot;,&quot;)))</code></pre>
+</div>
+<div id="transforming-data-from-wide-to-long-format" class="section level2">
+<h2>Transforming Data from Wide to Long format</h2>
+<pre class="r"><code>### Data Transformaiton (Wide to Long)
+
+## Data is in wide format, nicer to look at but I want to convert it to long format!
+candy_rank_long &lt;- candy_wide %&gt;% 
+  select(state, rank_1, rank_2, rank_3) %&gt;%
+  gather(ranking, chocolate, -state) %&gt;%
+  mutate(ranking = as.integer(str_remove(ranking,&quot;rank_&quot;)))
+
+candy_pound_long &lt;- candy_wide %&gt;%
+  select(state, pound_1, pound_2, pound_3) %&gt;%
+  gather(ranking, volume, -state) %&gt;%
+  mutate(ranking = as.integer(str_remove(ranking,&quot;pound_&quot;)))
+
+candy_long &lt;- candy_rank_long %&gt;% 
+  inner_join(candy_pound_long) %&gt;%
+  left_join(state_pop)
+
+candy_long &lt;-candy_long %&gt;% mutate(volume_per_capita = volume/pop_2016)
+
+## Just creating state table
+state_df &lt;- tibble(
+  state = c(state.name,&quot;District of Columbia&quot;),
+  state_div = c(as.character(state.division),&quot;South Atlantic&quot;),
+  state_abb = c(state.abb, &quot;DC&quot;)
+)
+
+candy_long &lt;- candy_long %&gt;%
+  left_join(state_df)</code></pre>
+</div>
+<div id="overall-popular-candies-in-united-states" class="section level2">
+<h2>Overall Popular Candies in United States</h2>
+<p>If candy was ranked #1 in state, I gave gold colour, if #2, then silver, #3 then bronze. Sort of like Olympic, I’ve counted how many metals each candies have gotten to decide most popular candy in US.</p>
+<p>There were total of 27 different candies in this data sets, most popular candies are M&amp;M followed by Skittles! I thought it was also interesting that Life Savers were top ranked candy in Delaware, but it did not appear in any other state, and similarly for Swedish Fish in Georgia.</p>
+<p>There’s Assorted Salt Water Taffy and Salt Water Taffy… I wasn’t sure if they are same candies…!</p>
+<pre class="r"><code>## using janitor package
+candy_list &lt;- candy_long %&gt;% tabyl(chocolate, ranking)  %&gt;% 
+  adorn_totals(&quot;col&quot;) %&gt;% 
+  arrange(-Total,-`1`,-`2`,-`3`) ## if candy was listed same # of times, then I want to make sure that better ranked candies are ranked higher.
+
+#show_col(c(&quot;#A77044&quot;, &quot;#A7A7AD&quot;,&quot;#D6AF36&quot;)) # bronze, silber, gold
+
+candy_long  %&gt;% 
+  mutate(chocolate = fct_relevel(chocolate, candy_list$chocolate)) %&gt;%
+  count(chocolate, ranking, state, state_abb) %&gt;%
+  ggplot(aes(x=fct_rev(chocolate),y=n)) + 
+  geom_col(aes(fill=fct_rev((factor(ranking)))), colour=&quot;#ffffff30&quot;) +
+  geom_text(aes(label=state_abb), position=&quot;stack&quot;, colour=&quot;#ffffff&quot;, 
+            size=5, hjust=1, family=font_rc, fontface=&quot;bold&quot;) +
+  theme_ipsum_rc() +
+  coord_flip() +
+  scale_fill_manual(values=c(&quot;#A77044&quot;, &quot;#A7A7AD&quot;,&quot;#D6AF36&quot;),
+                    name=&quot;ranking within state&quot;, 
+                    labels=c(&quot;bronze (3rd)&quot;, &quot;silver (2nd)&quot;,&quot;gold (1st)&quot;)) +
+  scale_y_comma() +
+  labs(title=&quot;Halloween Candy Olympic! - which candy gets which ranking from which state?&quot;) +
+  theme(legend.position=&quot;top&quot;, legend.direction = &quot;horizontal&quot;) +
+  guides(fill = guide_legend(reverse = TRUE)) </code></pre>
+<p><img src="/post/2018-10-25-popular-halloween-candy-on-us-state-grid-map_files/figure-html/overall_candy_ranking-1.png" width="1056" /></p>
+</div>
+<div id="grid-state-map" class="section level2">
+<h2>Grid State Map</h2>
+<p>I recently discovered <a href="https://cran.r-project.org/web/packages/geofacet/index.html">geofacet</a> package. <a href="https://hafen.github.io/geofacet/">Examples of graphs</a> you can create with this package looks super fun! I thought it was really neat that I can create my own grid using “Geo Grid Designer”!!</p>
+<pre class="r"><code>#get_grid_names() --&gt; you can see what grids are available.
+## I can preview the grid first
+#grid_design(us_state_grid1)
+
+## Going to use US state map  grid in geofacet package
+head(us_state_grid1) %&gt;% knitr::kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="right">row</th>
+<th align="right">col</th>
+<th align="left">code</th>
+<th align="left">name</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">6</td>
+<td align="right">7</td>
+<td align="left">AL</td>
+<td align="left">Alabama</td>
+</tr>
+<tr class="even">
+<td align="right">7</td>
+<td align="right">2</td>
+<td align="left">AK</td>
+<td align="left">Alaska</td>
+</tr>
+<tr class="odd">
+<td align="right">5</td>
+<td align="right">2</td>
+<td align="left">AZ</td>
+<td align="left">Arizona</td>
+</tr>
+<tr class="even">
+<td align="right">5</td>
+<td align="right">5</td>
+<td align="left">AR</td>
+<td align="left">Arkansas</td>
+</tr>
+<tr class="odd">
+<td align="right">4</td>
+<td align="right">1</td>
+<td align="left">CA</td>
+<td align="left">California</td>
+</tr>
+<tr class="even">
+<td align="right">4</td>
+<td align="right">3</td>
+<td align="left">CO</td>
+<td align="left">Colorado</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>## Join Candy data &amp; grid so I can create grid map
+candy_long_with_coord &lt;- 
+  candy_long %&gt;% 
+  left_join(us_state_grid1, by=c(&quot;state_abb&quot; = &quot;code&quot;))
+
+## Replace every other space with new line
+## some chocolate names are little too long to lists in one line...
+space_to_newline = function(x) gsub(&quot;([^ ]+ [^ ]+) &quot;,&quot;\\1\n&quot;, x)
+candy_long_with_coord &lt;- candy_long_with_coord %&gt;%
+  mutate(chocolate_label = map_chr(chocolate, space_to_newline),
+         facet_label = case_when(ranking==1 ~ &quot;Top Ranked Candies by State&quot;,
+                                 ranking==2 ~ &quot;2nd Popular Candies by States&quot;,
+                                 ranking==3 ~ &quot;3rd Popular Candies by States&quot;))
+
+
+candy_long_with_coord %&gt;%
+  #filter(ranking==1) %&gt;%
+  ggplot(aes(x=col, y=row)) +
+  geom_tile(color=&quot;#ffffff90&quot;, aes(fill=volume_per_capita)) +
+  #geom_text(aes(label=state), size=3.5, color=&quot;#ffffff20&quot;, vjust=4, family=font_rc_light) +
+  geom_text(aes(label=state_abb),size=5, family=font_rc, vjust=-1, color=&quot;#ffffff90&quot;) +
+  geom_text(aes(label=chocolate_label), family=font_rc, size=3.5, lineheight=0.8, color=&quot;#ffffff&quot;, vjust=1, fontface=&quot;bold&quot;) +
+  scale_y_reverse(breaks=NULL) +
+  scale_x_continuous(breaks=NULL) +
+  theme_ipsum_rc(base_family=&quot;Roboto Condensed&quot;) +
+  scale_fill_viridis_c(option=&quot;magma&quot;, alpha=0.8, end=0.7, 
+                       name=&quot;&quot;, 
+                       breaks=fivenum(candy_long$volume_per_capita),
+                       labels=c(&quot;&quot;,&quot;&quot;,&quot;&lt;&lt; Less Candy per Person&quot;,&quot;&quot;,&quot;More Candy per Person &gt;&gt;&quot;)) +
+  facet_wrap(~fct_reorder(facet_label, ranking), ncol=1) +
+  theme(legend.position = &quot;top&quot;,
+        legend.key.width = unit(2, &quot;cm&quot;),
+        legend.justification = &quot;left&quot;) +
+  labs(title=&quot;Top Ranked Candies by States&quot;,
+       caption=&quot;Data Source: CandyStore.com&#39;s sales from 2007–2015—focusing on the three months leading up to Halloween&quot;, x=&quot;&quot;, y=&quot;&quot;) +
+  coord_fixed(ratio=0.9)</code></pre>
+<p><img src="/post/2018-10-25-popular-halloween-candy-on-us-state-grid-map_files/figure-html/state_visual-1.png" width="1056" /></p>
+</div>
