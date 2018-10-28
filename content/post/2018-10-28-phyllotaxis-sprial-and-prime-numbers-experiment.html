@@ -1,0 +1,97 @@
+---
+title: Phyllotaxis Sprial and Prime Numbers - Experiment
+author: Chisato
+date: '2018-10-28'
+slug: phyllotaxis-sprial-and-prime-numbers-experiment
+categories:
+  - R
+tags:
+  - ggplot2
+  - art
+description: ''
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+
+
+<p>I recently tried out <a href="https://www.datacamp.com">Data Camp’s</a> project called <a href="https://www.datacamp.com/projects/62">“Phyllotaxis: Draw flowers using mathematics”</a>. Now I’m hooked on drawing spirals using <a href="https://en.wikipedia.org/wiki/Golden_angle">golden angle</a>. Also the mathematical art on instructor’s blog, <a href="https://fronkonstin.com/category/drawings/">Fronkostin</a> is just amazing!</p>
+<p>Separately on twitter, I’ve gotten message on art with prime number, and that got me thinking to experiment with prime number &amp; phyllotaxis flowers. I couldn’t figure out how I’d generate prime numbers in R, but I came across site where you can <a href="http://www.naturalnumbers.org/primes.htm">download prime numbers</a>.</p>
+<pre class="r"><code>library(tidyverse)
+library(patchwork)
+
+## Read first 10000 digits of prime number!
+prime &lt;- read_csv(file=&quot;http://www.naturalnumbers.org/P-10000.txt&quot;, col_names=F)
+names(prime) &lt;- c(&quot;nth_prime&quot;,&quot;prime&quot;,&quot;int&quot;)  ## int = interval from previous prime number
+
+
+## Function to Draw Frlower
+my_flower &lt;- function(points=5000,num_colour=9,col_option=&quot;magma&quot;,angle=pi*(3-sqrt(5)),...){
+  flower &lt;- tibble(
+    n = c(1:points), ## change number here to use different # of points
+    r = sqrt(n),
+    is_prime = n %in% prime$prime, #logical
+    colour = n%%num_colour, ## 2,3,6,12,18, seems to bring out the sprial pattern
+    x = r * cos(angle*n),
+    y = r * sin(angle*n)
+  )
+  
+  prime.cnt &lt;- flower %&gt;% filter(is_prime) %&gt;% count()
+  angle_deg &lt;- if(angle==pi*(3-sqrt(5))) {&quot;golden angle!(137.51 degree | 2.4 radian)&quot;} else {paste(round(angle*180/pi,2),&quot;degree | &quot;,round(angle,2),&quot;radian&quot;)}
+  
+  ## Drawing Flower (but not using Prime Number)
+  flower_plot &lt;-flower %&gt;%
+    filter(!is_prime) %&gt;%
+    ggplot(aes(x=x, y=y, colour=colour)) +
+    geom_point() +
+    geom_path(size=0.01) +
+    scale_colour_viridis_c(end=0.8, guide=&quot;none&quot;, option=col_option) +
+    coord_fixed() +
+    theme_void(base_family=&quot;Roboto Condensed&quot;) +
+    labs(caption=paste(num_colour, &quot;colours used to plot&quot;, points-prime.cnt,&quot;dots.\nAngle Used: &quot;, angle_deg), 
+         subtitle=&quot;Flower Nibbled by Prime Number Bug&quot;)
+  
+  ## Drawing Flower (only using Prime Number)
+  flower_prime &lt;-flower %&gt;%
+    filter(is_prime) %&gt;%
+    ggplot(aes(x=x, y=y, colour=colour)) +
+    geom_point() +
+    scale_colour_viridis_c(end=0.8, guide=&quot;none&quot;, option=col_option) +
+    coord_fixed() +
+    theme_void(base_family=&quot;Roboto Condensed&quot;) +
+    labs(caption=paste(&quot;Numbers between 1 and &quot;,points, &quot;have&quot;, prime.cnt,&quot; Prime Numbers\n&quot;),
+         subtitle=&quot;Flower made up by Prime Numbers Only&quot;)
+  
+  #You need to Print
+  flower_plot + flower_prime
+  
+}</code></pre>
+<div id="experimenting-with-different-variables" class="section level2">
+<h2>Experimenting with Different Variables</h2>
+<p>I’ve wrote function to draw flower as above, so I can now experiment by changing below.</p>
+<ul>
+<li>points = Number of points e.g. Up to what number should we use to draw flower? (up to 104729)</li>
+<li>num_colour = Number of colours to use. When golden angle is used, seems like multiple of 6 makes colours line up?</li>
+<li>col_option = I can use magma,viridis, plasma, inferno or cividis here</li>
+<li>angle = Angle to use for drawing spirals. Default is set to golden angle pi*(3-sqrt(5))</li>
+</ul>
+<pre class="r"><code>my_flower()  ## drawing with all default values e.g. 5000 points, 9 colours, angle= golden angle</code></pre>
+<p><img src="/post/2018-10-28-phyllotaxis-sprial-and-prime-numbers-experiment_files/figure-html/Testing_Function-1.png" width="1056" /></p>
+<pre class="r"><code>my_flower(angle = 2*pi-(pi*(3-sqrt(5))))  ## changing angle 2pi - golden angle so it looks like it&#39;s the reverse of the above.</code></pre>
+<p><img src="/post/2018-10-28-phyllotaxis-sprial-and-prime-numbers-experiment_files/figure-html/Testing_Function-2.png" width="1056" /></p>
+<pre class="r"><code>my_flower(angle=pi/sqrt(7))  ##  Just testing out different angles</code></pre>
+<p><img src="/post/2018-10-28-phyllotaxis-sprial-and-prime-numbers-experiment_files/figure-html/Testing_Function-3.png" width="1056" /></p>
+<pre class="r"><code>my_flower(angle=pi/sqrt(pi), num_col=6*3) ## Using 18 different colours, but hard to distinguish the colour...  </code></pre>
+<p><img src="/post/2018-10-28-phyllotaxis-sprial-and-prime-numbers-experiment_files/figure-html/Testing_Function-4.png" width="1056" /></p>
+<pre class="r"><code>my_flower(angle=exp(1), num_col=10) ## exp(1) = Euler&#39;s Number as angle. </code></pre>
+<p><img src="/post/2018-10-28-phyllotaxis-sprial-and-prime-numbers-experiment_files/figure-html/Testing_Function-5.png" width="1056" /></p>
+<pre class="r"><code>my_flower(angle = 0.3, num_col=3) ## All the black arm goes away when you only use prime number</code></pre>
+<p><img src="/post/2018-10-28-phyllotaxis-sprial-and-prime-numbers-experiment_files/figure-html/Testing_Function-6.png" width="1056" /></p>
+<pre class="r"><code>my_flower(num_col=6*3, col_option=&quot;plasma&quot;) ## plasma colour palette! </code></pre>
+<p><img src="/post/2018-10-28-phyllotaxis-sprial-and-prime-numbers-experiment_files/figure-html/Testing_Function-7.png" width="1056" /></p>
+<pre class="r"><code>my_flower(points=10000,num_col=18, col_option=&quot;viridis&quot;)  ## little over crowded...</code></pre>
+<p><img src="/post/2018-10-28-phyllotaxis-sprial-and-prime-numbers-experiment_files/figure-html/Testing_Function-8.png" width="1056" /></p>
+<p>I could play with different angles all day long! So intriguing…</p>
+</div>

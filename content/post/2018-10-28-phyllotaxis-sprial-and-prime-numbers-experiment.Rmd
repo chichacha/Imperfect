@@ -1,0 +1,109 @@
+---
+title: Phyllotaxis Sprial and Prime Numbers - Experiment
+author: Chisato
+date: '2018-10-28'
+slug: phyllotaxis-sprial-and-prime-numbers-experiment
+categories:
+  - R
+tags:
+  - ggplot2
+  - art
+description: ''
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+
+I recently tried out [Data Camp's](https://www.datacamp.com) project called ["Phyllotaxis: Draw flowers using mathematics"](https://www.datacamp.com/projects/62).  Now I'm hooked on drawing spirals using [golden angle](https://en.wikipedia.org/wiki/Golden_angle). Also the mathematical art on instructor's blog, [Fronkostin](https://fronkonstin.com/category/drawings/) is just amazing! 
+
+Separately on twitter, I've gotten message on art with prime number, and that got me thinking to experiment with prime number & phyllotaxis flowers. I couldn't figure out how I'd generate prime numbers in R, but I came across site where you can [download prime numbers](http://www.naturalnumbers.org/primes.htm).  
+
+
+```{r setup_flower_function, fig.width=11, message=FALSE, warning=FALSE, paged.print=FALSE}
+library(tidyverse)
+library(patchwork)
+
+## Read first 10000 digits of prime number!
+prime <- read_csv(file="http://www.naturalnumbers.org/P-10000.txt", col_names=F)
+names(prime) <- c("nth_prime","prime","int")  ## int = interval from previous prime number
+
+
+## Function to Draw Frlower
+my_flower <- function(points=5000,num_colour=9,col_option="magma",angle=pi*(3-sqrt(5)),...){
+  flower <- tibble(
+    n = c(1:points), ## change number here to use different # of points
+    r = sqrt(n),
+    is_prime = n %in% prime$prime, #logical
+    colour = n%%num_colour, ## 2,3,6,12,18, seems to bring out the sprial pattern
+    x = r * cos(angle*n),
+    y = r * sin(angle*n)
+  )
+  
+  prime.cnt <- flower %>% filter(is_prime) %>% count()
+  angle_deg <- if(angle==pi*(3-sqrt(5))) {"golden angle!(137.51 degree | 2.4 radian)"} else {paste(round(angle*180/pi,2),"degree | ",round(angle,2),"radian")}
+  
+  ## Drawing Flower (but not using Prime Number)
+  flower_plot <-flower %>%
+    filter(!is_prime) %>%
+    ggplot(aes(x=x, y=y, colour=colour)) +
+    geom_point() +
+    geom_path(size=0.01) +
+    scale_colour_viridis_c(end=0.8, guide="none", option=col_option) +
+    coord_fixed() +
+    theme_void(base_family="Roboto Condensed") +
+    labs(caption=paste(num_colour, "colours used to plot", points-prime.cnt,"dots.\nAngle Used: ", angle_deg), 
+         subtitle="Flower Nibbled by Prime Number Bug")
+  
+  ## Drawing Flower (only using Prime Number)
+  flower_prime <-flower %>%
+    filter(is_prime) %>%
+    ggplot(aes(x=x, y=y, colour=colour)) +
+    geom_point() +
+    scale_colour_viridis_c(end=0.8, guide="none", option=col_option) +
+    coord_fixed() +
+    theme_void(base_family="Roboto Condensed") +
+    labs(caption=paste("Numbers between 1 and ",points, "have", prime.cnt," Prime Numbers\n"),
+         subtitle="Flower made up by Prime Numbers Only")
+  
+  #You need to Print
+  flower_plot + flower_prime
+  
+}
+
+
+```
+
+## Experimenting with Different Variables 
+
+I've wrote function to draw flower as above, so I can now experiment by changing below.
+
+* points = Number of points e.g. Up to what number should we use to draw flower? (up to 104729)
+* num_colour = Number of colours to use.  When golden angle is used, seems like multiple of 6 makes colours line up? 
+* col_option = I can use magma,viridis, plasma, inferno or cividis here
+* angle = Angle to use for drawing spirals.  Default is set to golden angle pi*(3-sqrt(5))
+
+
+```{r Testing_Function, echo=TRUE, fig.width=11, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+my_flower()  ## drawing with all default values e.g. 5000 points, 9 colours, angle= golden angle
+
+my_flower(angle = 2*pi-(pi*(3-sqrt(5))))  ## changing angle 2pi - golden angle so it looks like it's the reverse of the above.
+
+my_flower(angle=pi/sqrt(7))  ##  Just testing out different angles
+my_flower(angle=pi/sqrt(pi), num_col=6*3) ## Using 18 different colours, but hard to distinguish the colour...  
+my_flower(angle=exp(1), num_col=10) ## exp(1) = Euler's Number as angle. 
+
+my_flower(angle = 0.3, num_col=3) ## All the black arm goes away when you only use prime number
+
+my_flower(num_col=6*3, col_option="plasma") ## plasma colour palette! 
+my_flower(points=10000,num_col=18, col_option="viridis")  ## little over crowded...
+
+
+```
+
+I could play with different angles all day long! So intriguing...  
+
+
+
