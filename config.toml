@@ -25,7 +25,7 @@ post = "/:year/:month/:day/:slug/"
   # Sets the navbarTitle that appears in the top left of the navigation bar
   navbarTitle          = "Chi's Impe[r]fect Blog"
   # Sets where "View More Posts" links
-  viewMorePostLink     = "/blog/"
+  viewMorePostLink     = "/post/"
 
 # Optional Params
   # Sets navbarTitle to match the section of the website
