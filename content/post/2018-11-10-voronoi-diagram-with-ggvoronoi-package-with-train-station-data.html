@@ -1,0 +1,279 @@
+---
+title: Voronoi diagram with ggvoronoi package with Train Station data
+author: Chisato
+date: '2018-11-10'
+slug: voronoi-diagram-with-ggvoronoi-package-with-train-station-data
+categories:
+  - R
+tags:
+  - tidyverse
+  - ggvoronoi
+  - treemap
+  - patchwork
+  - mapdata
+  - jpndistrict
+description: ''
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+
+
+<p>I’ve always been curious to make Voronoi diagram, I just think they are beautiful! When I came across data set with train stations in Japan. I instantly thought this would be great data sets to make Voronoi diagram! I’ve gotten data sets from (Ekidata)[<a href="http://www.ekidata.jp/" class="uri">http://www.ekidata.jp/</a>] site. I’m amazed how many train stations we have in Japan, as well as coverage of train systems in Japan.</p>
+<p>There are couple of packages I could’ve used to make Voronoi diagram, but I’ve utilized package <a href="https://cran.r-project.org/web/packages/ggvoronoi/index.html">ggvoronoi</a>. I really like using “outline” inside of geom_voronoi function to mask out the shape! (Which I wasn’t sure how to do before using <a href="https://cran.r-project.org/web/packages/deldir/index.html">deldir</a> package).</p>
+<div id="voronoi-diagram-with-train-station-as-a-seed." class="section level2">
+<h2>Voronoi Diagram with Train Station as a seed.</h2>
+<p>ggvoronoi makes it easy to plot voronoi diagram! All I really needed to produce voronoi diagram was longitude &amp; latitude.</p>
+<p>Initially I’ve plotted all the train station as a point (using geom_point), you can see that station will reveal shape of Japan, as JR (Japan Railway) really covers coast line of Japan. There are total of 10828 points, as there were 10828 stations listed in most recent data set downloaded today.</p>
+<p>I also used treemap package to create treemap.<br />
+I’ve colour coded rectangle inside of treemap with company types. 47% of 10K+ stations are JR <a href="https://en.wikipedia.org/wiki/Japan_Railways_Group">Japan Railway</a> stations in Japan.</p>
+<p>Tokyo (area: 2,188 sq.km) has 943 stations all together, followed by Hokkaido 650 stations, but Hokkaido is the biggest prefecture in terms of area (83,456.87 sq.km) . It would be interesting to get <a href="https://en.wikipedia.org/wiki/List_of_Japanese_prefectures_by_area">area data</a> for each prefecture, so we can calculate stations per area.</p>
+<pre class="r"><code>jp &lt;- ggplot2::map_data(&#39;world2&#39;, region=&#39;japan&#39;)
+names(jp) &lt;- c(&quot;lon&quot;,&quot;lat&quot;, &quot;group&quot;,&quot;order&quot;,&quot;region&quot;,&quot;subregion&quot;)
+## for train, I&#39;m going to tidy up the map bit. (I&#39;ve excluded Okinawa for now)
+jp_outline &lt;- jp %&gt;% filter(subregion %in% c(&quot;Honshu&quot;,&quot;Hokkaido&quot;,&quot;Kyushu&quot;,&quot;Shikoku&quot;))
+
+## I also wanted prefecture level data, so I&#39;ve used map data from mapdata package.
+jp_outline_detailed &lt;- map_data(&quot;japan&quot;)
+
+
+## station_master lists all stations of all lines
+plotPoints &lt;-station_master %&gt;%
+  ggplot(aes(x=lon, y=lat)) +
+  theme_void(base_family=&quot;Roboto Condensed&quot;) +
+  geom_polygon(data=jp_outline, aes(group=group), fill=&quot;#ffffff&quot;, color=&quot;#33333380&quot;) +
+  geom_point(aes(color=pref_cd),size=0.1, alpha=0.8) +
+  scale_color_viridis_c(end=0.5, guide=&quot;none&quot;) +
+  labs(title=&quot;Each Train Station as a point&quot;) +
+  coord_quickmap()
+
+## station_master2 is reduced version of station_master
+plotVoronoi &lt;-station_master2 %&gt;%
+  ggplot(aes(x=lon, y=lat)) +
+  theme_void(base_family=&quot;Roboto Condensed&quot;) +
+  geom_polygon(data=jp_outline, aes(group=group), fill=&quot;#ffffff00&quot;, color=&quot;#33333380&quot;) +
+  geom_path(stat=&quot;voronoi&quot;, size=0.1, aes(color=pref_cd)) +
+  coord_quickmap() +
+  scale_color_viridis_c(end=0.5, guide=&quot;none&quot;) +
+  labs(title=&quot;Voronoi Diagram with station as a seed&quot;)
+
+## use patchwork package to plot 2 plots side by side
+plotPoints + plotVoronoi</code></pre>
+<p><img src="/post/2018-11-10-voronoi-diagram-with-ggvoronoi-package-with-train-station-data_files/figure-html/voronoi_japan-1.png" width="1152" /></p>
+<pre class="r"><code>## All of Japan - Takes long time to draw on my machine.
+station_master2 %&gt;% 
+  ggplot(aes(x=lon, y=lat)) +
+  theme_void(base_family=&quot;Hiragino Sans W5&quot;) +
+  geom_voronoi(aes(fill=station_cnt),size=0.05, color=&quot;#ffffff&quot;, 
+               outline=jp_outline) + ## this outline feature is awesome!
+  coord_quickmap() +
+  scale_fill_viridis_c(end=0.8, option=&quot;magma&quot;, guide=&quot;none&quot;) </code></pre>
+<p><img src="/post/2018-11-10-voronoi-diagram-with-ggvoronoi-package-with-train-station-data_files/figure-html/voronoi_japan-2.png" width="1152" /></p>
+</div>
+<div id="treemap-with-treemap-package" class="section level2">
+<h2>Treemap with treemap package</h2>
+<p>With treemap, I can easily see which prefecture has more stations. Also I wanted to see which railway company are dominant in each prefecture.</p>
+<pre class="r"><code>## Treemap to see which prefecture has more stations.
+station_master %&gt;% 
+  count(pref_name,company_type_descr,company_name_r) %&gt;%
+  add_count(pref_name,wt=n) %&gt;%
+  mutate(pref_descr = paste(pref_name,&quot;:&quot;,nn,&quot;駅&quot;)) %&gt;%
+  treemap(index=c(&quot;pref_descr&quot;,&quot;company_type_descr&quot;,&quot;company_name_r&quot;),
+          vSize=&quot;n&quot;, vColor=&quot;company_type_descr&quot;, type=&quot;categorical&quot;,
+          fontfamily.labels=&quot;Hiragino Sans W3&quot;,
+          align.labels=list(c(&quot;left&quot;,&quot;top&quot;),c(&quot;center&quot;,&quot;center&quot;),c(&quot;right&quot;,&quot;bottom&quot;)),
+          fontsize.labels=c(13,0,11),
+          palette=viridis_pal(end=0.6)(4),
+          border.col=&quot;white&quot;,
+          bg.labels=0,
+          position.legend=&quot;bottom&quot;,
+          title.legend=&quot;&quot;, 
+          title=&quot;Number of Stations by Prefecture\ncoloured by operating company types&quot;)</code></pre>
+<p><img src="/post/2018-11-10-voronoi-diagram-with-ggvoronoi-package-with-train-station-data_files/figure-html/treemap_prefecture_train_company-1.png" width="1536" /></p>
+<div id="writing-function-to-plot-prefecture-level-voronoi" class="section level3">
+<h3>Writing Function to Plot Prefecture Level Voronoi</h3>
+<p>There are 47 prefectures in Japan. So I’ve decided to write function to draw voronoi as below. I think below can be simplified…, but for now it does the job…</p>
+<pre class="r"><code>## function to draw voronoi map at prefecture level
+draw_pref &lt;- function(pref_no=1,zoom=T,save_file=F,folder_name=&quot;prefecture&quot;,...){
+  region &lt;- prefs %&gt;% filter(pref_cd==pref_no) %&gt;% pull(pref_name_en)
+  region_jp &lt;- prefs %&gt;% filter(pref_cd==pref_no) %&gt;% pull(pref_name) 
+  pref_summary  &lt;- station_master %&gt;% 
+    filter(pref_cd==pref_no) %&gt;% 
+    summarise(station_cnt=n(),
+              line_cnt =n_distinct(line_name), 
+              company_count=n_distinct(company_name_r))
+  
+  tmp_df &lt;- station_master2 %&gt;% filter(pref_cd==pref_no)
+  pref_outline &lt;- map_data(&quot;japan&quot;, region=region)
+  
+  capital &lt;-jpnprefs %&gt;% mutate(pref_cd=row_number()) %&gt;% filter(pref_cd==pref_no)
+  
+  ## calculate distance between capital city &amp; each station so i can colour the cell of voronoi.
+  tmp_df &lt;- tmp_df %&gt;%
+    mutate(dist_from_capital = 
+             sqrt((lon-capital$capital_longitude)^2 + (lat-capital$capital_latitude)^2))
+  
+  # finding bounding box from train station data... , so I can crop the map if I want to.
+  bbox &lt;-tmp_df  %&gt;% ungroup() %&gt;% 
+    summarise(xmax=max(lon), xmin=min(lon), ymax=max(lat), ymin=min(lat))
+  
+  
+  base_map &lt;-tmp_df %&gt;% ggplot(aes(x=lon,y=lat)) +
+    theme_void(base_family=&quot;Hiragino Sans W5&quot;) +
+    #geom_voronoi(aes(fill=comp_cd_min) ,size=0.1, color=&quot;#ffffff&quot;, 
+    #           outline=pref_outline) +
+    geom_voronoi(aes(fill=dist_from_capital) ,size=0.1, color=&quot;#ffffff&quot;, 
+               outline=pref_outline) +
+    #scale_fill_gradientn(colors = c(&quot;#440154FF&quot;,&quot;#000000FF&quot;,&quot;#31688EFF&quot;, &quot;#1F9E89FF&quot;,&quot;#6DCD59FF&quot;),
+                       #breaks=c(0,7,30,100,200), limits=c(1,250), guide=&quot;none&quot;) +
+    scale_fill_viridis_c(end=0.9, guide=&quot;none&quot;, option=&quot;magma&quot;) +
+    labs(title=paste0(region_jp,&quot; (&quot;,region,&quot;)&quot;), 
+         caption=paste0(&quot;Capital City of &quot;,region,&quot; is &quot;,capital$capital, &quot; @ (&quot;,
+                        round(capital$capital_longitude,2),&quot;,&quot;, round(capital$capital_latitude,2),&quot;)&quot;),
+         subtitle=paste(pref_summary$station_cnt,&quot;stations&quot;, 
+                       pref_summary$line_cnt,&quot; lines operated by&quot;, 
+                       pref_summary$company_count, &quot;companies in&quot;, 
+                       str_to_title(region))) +
+    geom_point(data=capital, aes(x=capital_longitude, y=capital_latitude),shape=4, color=&quot;#ffffff&quot;) 
+  
+  if (zoom) {
+    print(base_map + 
+            coord_quickmap(xlim=c(bbox$xmin-0.1,bbox$xmax+0.1), 
+                           ylim=c(bbox$ymin-0.1,bbox$ymax+0.1)))
+    } else {
+    print(base_map + coord_quickmap())
+    }
+  
+  if(save_file){
+    ggsave(paste0(folder_name,&quot;/&quot;,
+                  formatC(pref_no, width=2,flag=&quot;0&quot;),&quot;-&quot;,str_to_lower(region),&quot;.png&quot;),
+           width=9,height=9,dpi=300)
+  }
+  
+}
+
+
+## function to draw treemap at prefecture level
+draw_treemap &lt;- function(pref_no=1,...){
+  station_master$color &lt;- 
+    viridis_pal(end=0.6)(nlevels(station_master$company_type_descr))[station_master$company_type_descr]
+  title_text &lt;- prefs %&gt;% filter(pref_cd==pref_no) %&gt;% pull(pref_name_en)
+  
+  station_master %&gt;% 
+    filter(pref_cd==pref_no) %&gt;%
+    count(company_type_descr,company_name_r,line_name,color,station_name) %&gt;%
+    treemap(index=c(&quot;company_type_descr&quot;,&quot;company_name_r&quot;,&quot;line_name&quot;,&quot;station_name&quot;),
+            vSize=&quot;n&quot;, vColor=&quot;color&quot;, type=&quot;color&quot;,
+            fontfamily.labels=&quot;Hiragino Sans W3&quot;,
+            fontfamily.title=&quot;Roboto Condensed&quot;,
+            align.labels=list(c(&quot;center&quot;,&quot;center&quot;),c(&quot;left&quot;,&quot;top&quot;),
+                              c(&quot;right&quot;,&quot;bottom&quot;),c(&quot;center&quot;,&quot;center&quot;)),
+            fontsize.labels=c(0,13,11,0),
+            border.col=c(&quot;#ffffffff&quot;,&quot;#ffffff90&quot;,&quot;#ffffff30&quot;,&quot;#ffffff10&quot;),
+            border.lwds = c(3,2,1,0.2),
+            bg.labels=0,
+            title.legend=&quot;&quot;, title=&quot;&quot;,
+            aspRatio = 16/9)
+}</code></pre>
+</div>
+</div>
+<div id="tokyo" class="section level2">
+<h2>Tokyo!</h2>
+<p>While it’s interesting to see Voronoi map of Japan, I wanted to zoom into selected prefectures that I care maybe more about.</p>
+<p>Firstly, Tokyo. I love looking at Tokyo’s train map such as this one. <a href="https://www.jreast.co.jp/e/downloads/pdf/routemap_e.pdf">JR East Route Map PDF</a>.</p>
+<p>For below voronoi diagram, I’ve decided to colour the voronoi cell with distance from Shinjuku (capital city of Tokyo) to corresponding station cell. (I actually think it’s more interesting to get train usage data, and colour the cell with train usage data, but because there are so many different operating company, getting data about train usage seemed like pretty hard task to do…)</p>
+<p>I like how dense train staions are packed around central tokyo (east side), but as you go towards the west, cell becomes bigger and bigger. In fact, far west side of Tokyo, there are NOT that many stations at all.</p>
+<p>I’ve also created treemap for Tokyo below. Personally I was surprised that there are maybe more Tokyo metro stations than JR stations in Tokyo. I’ve also came to realize that there are so many companies…</p>
+<pre class="r"><code>draw_pref(13, zoom=T, save_file=F)</code></pre>
+<p><img src="/post/2018-11-10-voronoi-diagram-with-ggvoronoi-package-with-train-station-data_files/figure-html/Tokyo-1.png" width="1536" /></p>
+<pre class="r"><code>draw_treemap(13)</code></pre>
+<p><img src="/post/2018-11-10-voronoi-diagram-with-ggvoronoi-package-with-train-station-data_files/figure-html/Tokyo-2.png" width="1536" /></p>
+<pre class="r"><code>station_master %&gt;% 
+  filter(pref_cd==13) %&gt;%
+  arrange(e_sort) %&gt;%
+  ggplot(aes(x=lon, y=lat)) +
+  geom_sf(data=jpn_pref(13), inherit.aes=F, color=&quot;#33333320&quot;) +
+  geom_point(aes(color=company_name_r, shape=company_type_descr), alpha=0.8) +
+  theme(axis.text=element_blank(),
+        axis.title=element_blank()) +
+  theme_minimal(base_family=&quot;Hiragino Sans W5&quot;) +
+  geom_text_repel(data=station_master2 %&gt;% filter(pref_cd==13 &amp; station_cnt&gt;6), 
+            aes(label=station_name),
+            family=&quot;Osaka&quot;, min.segment.length=0, nudge_x=0.25, segment.color=&quot;#33333350&quot;) +
+  scale_color_hue(l=45) +
+  coord_sf(ylim=c(35.5,35.9), xlim=c(138.8,139.9)) ## to remove islands of Tokyo</code></pre>
+<p><img src="/post/2018-11-10-voronoi-diagram-with-ggvoronoi-package-with-train-station-data_files/figure-html/Tokyo-3.png" width="1536" /></p>
+</div>
+<div id="plotting-kanagawa-prefecture" class="section level2">
+<h2>Plotting Kanagawa Prefecture</h2>
+<p><a href="https://en.wikipedia.org/wiki/Kanagawa_Prefecture">Kanagawa</a> prefecture is where <a href="https://en.wikipedia.org/wiki/Yokohama">Yokohama</a>, Also where one of my favourite place, <a href="https://en.wikipedia.org/wiki/Kamakura">Kamakura</a> is. I like the shape of prefecture, as it sort of looks like a dog?! Maybe camel?!</p>
+<p>Capital city of Kanagawa prefecture is Yokohama, and I’ve again coloured cell based on distance from Yokohama. Similar to Tokyo, east side of Kanagawa has a lot of stations but west side is pretty sparse.</p>
+<pre class="r"><code>draw_pref(14, zoom=T, save_file=F)</code></pre>
+<p><img src="/post/2018-11-10-voronoi-diagram-with-ggvoronoi-package-with-train-station-data_files/figure-html/Kanagawa-1.png" width="1536" /></p>
+<pre class="r"><code>draw_treemap(14)</code></pre>
+<p><img src="/post/2018-11-10-voronoi-diagram-with-ggvoronoi-package-with-train-station-data_files/figure-html/Kanagawa-2.png" width="1536" /></p>
+<pre class="r"><code>## See Station in Kanagawa
+station_master %&gt;% 
+  filter(pref_cd==14) %&gt;%
+  arrange(e_sort) %&gt;%
+  ggplot(aes(x=lon, y=lat)) +
+  geom_sf(data=jpn_pref(14), inherit.aes=F, color=&quot;#33333320&quot;) +
+  geom_point(aes(color=company_name_r, shape=company_type_descr), alpha=0.8) +
+  theme(axis.text=element_blank(),
+        axis.title=element_blank()) +
+  theme_minimal(base_family=&quot;Hiragino Sans W5&quot;) +
+  geom_text_repel(data=station_master2 %&gt;% filter(pref_cd==14 &amp; station_cnt&gt;3), 
+            aes(label=station_name),
+            family=&quot;Osaka&quot;, min.segment.length=0, nudge_x=0.25, segment.color=&quot;#33333350&quot;) +
+  scale_color_hue(l=45)</code></pre>
+<p><img src="/post/2018-11-10-voronoi-diagram-with-ggvoronoi-package-with-train-station-data_files/figure-html/Kanagawa-3.png" width="1536" /></p>
+</div>
+<div id="plotting-chiba-prefecture" class="section level2">
+<h2>Plotting Chiba Prefecture</h2>
+<p><a href="https://en.wikipedia.org/wiki/Chiba_Prefecture">Chiba</a> is where Narita Airport is. I just had to plot it out, because I like the shape of prefecture :) It looks like a hummingbird to me, but Chiba prefecture actually have a maskot called <a href="http://japan-chiba-guide.com/en/about-chiba/chibakun.html">Chi-ba-kun</a>, and it’s a dog character.</p>
+<pre class="r"><code>draw_pref(12, zoom=T, save_file=F)</code></pre>
+<p><img src="/post/2018-11-10-voronoi-diagram-with-ggvoronoi-package-with-train-station-data_files/figure-html/Chiba-1.png" width="1536" /></p>
+<pre class="r"><code>draw_treemap(12)</code></pre>
+<p><img src="/post/2018-11-10-voronoi-diagram-with-ggvoronoi-package-with-train-station-data_files/figure-html/Chiba-2.png" width="1536" /></p>
+<pre class="r"><code>## See Station in Chiba
+station_master %&gt;% 
+  filter(pref_cd==12) %&gt;%
+  arrange(e_sort) %&gt;%
+  ggplot(aes(x=lon, y=lat)) +
+  geom_sf(data=jpn_pref(12), inherit.aes=F, color=&quot;#33333320&quot;) +
+  geom_point(aes(color=company_name_r, shape=company_type_descr), alpha=0.8) +
+  theme(axis.text=element_blank(),
+        axis.title=element_blank()) +
+  theme_minimal(base_family=&quot;Hiragino Sans W5&quot;) +
+  geom_text_repel(data=station_master2 %&gt;% filter(pref_cd==12 &amp; station_cnt&gt;3), 
+            aes(label=station_name),size=3,
+            family=&quot;Osaka&quot;, min.segment.length=0, nudge_x=0.25, segment.color=&quot;#33333350&quot;) +
+  scale_color_hue(l=45)</code></pre>
+<p><img src="/post/2018-11-10-voronoi-diagram-with-ggvoronoi-package-with-train-station-data_files/figure-html/Chiba-3.png" width="1536" /></p>
+</div>
+<div id="bonus-plotting-hokkaido-prefecture" class="section level2">
+<h2>Bonus: Plotting Hokkaido Prefecture</h2>
+<p><a href="https://en.wikipedia.org/wiki/Hokkaido">Hokkaido</a> is the largest prefecture in Japan, and it has 2nd most numbers of train stations. (While it has 2nd most stations in number, Hokkaido is about 37 times bigger than Tokyo in area).</p>
+<p>Shape of Hokkaido is pretty iconic (at least in my mind.) I recently found out there’s heart-shaped lake called <a href="(https://www.google.ca/maps/@42.089482,143.2694329,17z)">Toyoni lake</a> in Hokkaido too, but I didn’t spot heart-shaped Voronoi cell…</p>
+<pre class="r"><code>draw_pref(1, zoom=T, save_file=F)</code></pre>
+<p><img src="/post/2018-11-10-voronoi-diagram-with-ggvoronoi-package-with-train-station-data_files/figure-html/Hokkaido-1.png" width="1536" /></p>
+<pre class="r"><code>draw_treemap(1)</code></pre>
+<p><img src="/post/2018-11-10-voronoi-diagram-with-ggvoronoi-package-with-train-station-data_files/figure-html/Hokkaido-2.png" width="1536" /></p>
+<pre class="r"><code>## To see station on actual map
+station_master %&gt;% 
+  filter(pref_cd==1) %&gt;%
+  arrange(e_sort) %&gt;%
+  ggplot(aes(x=lon, y=lat)) +
+  geom_sf(data=jpn_pref(1), inherit.aes=F, color=&quot;#33333320&quot;) +
+  geom_point(aes(color=company_name_r, shape=company_type_descr), alpha=0.8) +
+  theme(axis.text=element_blank(),
+        axis.title=element_blank()) +
+  theme_minimal(base_family=&quot;Hiragino Sans W5&quot;) +
+  geom_text_repel(data=station_master2 %&gt;% filter(pref_cd==1 &amp; station_cnt&gt;=3), 
+            aes(label=station_name),
+            family=&quot;Osaka&quot;, min.segment.length=0, nudge_x=2, segment.color=&quot;#33333350&quot;) +
+  scale_color_hue(l=45, name=&quot;company name&quot;)</code></pre>
+<p><img src="/post/2018-11-10-voronoi-diagram-with-ggvoronoi-package-with-train-station-data_files/figure-html/Hokkaido-3.png" width="1536" /></p>
+</div>
