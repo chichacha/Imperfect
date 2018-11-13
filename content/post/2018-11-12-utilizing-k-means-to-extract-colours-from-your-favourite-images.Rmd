@@ -1,0 +1,182 @@
+---
+title: Utilizing K-means to extract colours from your favourite images
+author: Chisato
+date: '2018-11-12'
+slug: utilizing-k-means-to-extract-colours-from-your-favourite-images
+categories:
+  - R
+tags:
+  - ggvoronoi
+  - treemap
+  - imager
+  - tidyverse
+  - kmeans
+  - plotly
+description: ''
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+I have been playing with package called [imager](https://cran.r-project.org/web/packages/imager/index.html), documentation on this package was extremely helpful! I have read through "[getting started](https://cran.r-project.org/web/packages/imager/vignettes/gettingstarted.html)" as well as [few other tutorial & examples](http://dahtah.github.io/imager/).
+
+I love colours... Tools like [colourlovers](https://www.colourlovers.com/), [Adobe Color CC](https://color.adobe.com/), [Canva Color Palette Generators](https://www.canva.com/color-palette/) are great extracting colours from photo (or in general just getting [inspirations](https://www.canva.com/learn/100-color-combinations/) for colour palette), but I wanted to figure out the way to extract colours from image using R.
+
+
+## Preps 
+
+Loading up packages & loading up image to R, and extracting RGB info out of image. 
+First I need to load up image. I'm using below abstract image with bunch of different colours that I've created with Photoshop just for fun. 
+
+```{r preperation, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+library(tidyverse) ##
+library(imager) ## such a fun package.  I want to learn more.
+library(treemap) ## 
+library(ggvoronoi) ## because I'm currently addicted to voronoi diagram.
+
+## Load up the image using load.image function! 
+im <- load.image("https://farm4.staticflickr.com/3316/3333507738_9d36d39f6d_b.jpg") ## colourful abstract image. 
+#im <- load.image("https://farm9.staticflickr.com/8125/8659010017_54a885f12a_z.jpg") ## mainly blue
+#im <- load.image("https://farm2.staticflickr.com/1939/30915465767_2d9a733510_z.jpg") ## animoji! 
+
+## View the image I just loaded. 
+plot(im, main="Original Image I Want To Get Some Colours Out Of!")
+df_size <-dim(im)[1]*dim(im)[2]  ## numbers of row I'd get if i use it as it is...
+max_row_num <- 150000 ## number of maximum row I want (just to limit my size!)
+
+## If df is too big, it's too slow to process on my computer, so shrink the image
+shrink_ratio  <- if(df_size > max_row_num) {max_row_num / df_size } else {1}
+im <- im %>% imresize(shrink_ratio)
+# plot(im) if you want to check how the image has been resized.
+
+## get RGB value at each pixel
+im_rgb <- im %>% 
+  as.data.frame(wide="c") %>%
+  rename(red=c.1,green=c.2,blue=c.3) %>%
+  mutate(hexvalue = rgb(red,green,blue)) ## you can create hexvalue using red, green blue value!
+
+## turn image into Grayscale and get luminance "value" too. 
+im_gray <- im %>%
+  grayscale() %>%
+  as.data.frame() 
+
+## combine RGB info and Luminance Value Dataset together.
+im_df <- im_rgb %>% 
+  inner_join(im_gray) 
+
+im_df %>% head()
+
+```
+
+
+## Applying K-Means Algorithm on RGB value from Image
+
+Using kmeans function is pretty simple, I'm selecting 12 as k in below example, simply because I wanted to get 12 distinct colours from the picture.  
+
+```{r kmeans_algorithm, echo=TRUE, fig.height=9, fig.width=16, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+## Pick k value to run kMean althorithm.
+## But to extract colours, I'd pick k as number I want back! 
+my_k <- 12
+
+## Running kmeans algorithm on red, green and blue value to gather similar colour together
+kmean_rgb <- kmeans(im_df %>% select(red,green,blue), centers=my_k)
+
+## append cluster id to im_df datasets.
+im_df$cluster_num <- kmean_rgb$cluster
+
+## center values can be used as cluster colour! 
+kmean_center <- kmean_rgb$centers %>% as.data.frame() %>% 
+  mutate(group_hex = rgb(red,green,blue), cluster_num = row_number()) %>%
+  inner_join(im_df %>% count(cluster_num))
+
+## I can also save the colour palette for future use as well.
+my_colour <- kmean_center$group_hex
+my_colour
+
+```
+
+### Viewing Colour Palettes 
+
+I wanted to view the colour palette more visually, instead of HexValues....
+
+```{r colour_palette, echo=TRUE, fig.height=6, fig.width=12, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+num_row = floor(my_k/4)
+kmean_center %>% 
+  ggplot(aes(x=(cluster_num-1)%%num_row,y=floor((cluster_num-1)/num_row))) + 
+  geom_tile(aes(fill=group_hex)) +
+  geom_label(aes(label=paste(cluster_num,":",group_hex,"\n",n,"distinct hexvalues")), 
+             family="Roboto Condensed", lineheight=0.8) +
+  scale_fill_manual(values=sort(kmean_center$group_hex), guide="none") +
+  theme_void(base_family="Roboto Condensed") +
+  labs(subtitle=paste0("k-Mean clustering center colour with ", my_k, " clusters" )) +
+  scale_y_reverse()
+
+```
+
+
+## Which colours get clustered together?
+
+I wanted to see which colours were bundled together in same cluster. I took a sample because plotting more colours simply just took way too long on my machine...
+
+```{r treemap_clustered_colour, fig.height=9, fig.width=16, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+im_df %>% 
+  sample_n(size=10000) %>% ## I'm just going to take sample to make the drawing bit faster...
+  count(cluster_num,hexvalue) %>%
+  treemap(index=c("cluster_num","hexvalue"),
+          type="color",
+          vSize="n", 
+          vColor="hexvalue",
+          algorithm = "squarified",
+          fontfamily.labels="Roboto Condensed", 
+          fontfamily.title="Roboto Condensed",
+          border.col=c("#ffffff","#ffffff50"),
+          fontsize.labels=c(24,0),
+          aspRatio=16/9,
+          title="Clustering with RGB")
+
+```
+
+## Bonus: Voronoi Abstract Art 
+
+Below is more fun to do on other images, but I wanted to just use [ggvoronoi](https://cran.r-project.org/web/packages/ggvoronoi/index.html) package because I'm [currently in love](https://chichacha.netlify.com/2018/11/10/voronoi-diagram-with-ggvoronoi-package-with-train-station-data/)... 
+
+Looks like stained glass! :) 
+
+```{r voronoi_art, fig.height=9, fig.width=16, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+## Create Mini sets, choose to select grayscale value that are bigger more often.
+im_df_mini <-im_df %>%
+  sample_n(size=1000, weight=(1-value)) 
+
+im_df_mini %>%
+  ggplot(aes(x=x,y=y)) +
+  geom_voronoi(aes(fill=hexvalue), color="#000000", size=0.1) +
+  scale_fill_manual(values=sort(unique(im_df_mini$hexvalue)), guide="none") +
+  theme_void() +
+  scale_y_reverse() +
+  coord_fixed()
+
+
+```
+
+
+## Using Plotly package
+
+I've always been curious to use plotly, but I haven't had chance to yet.  Since RGB values are 3 different values, I wanted to use xyz axis to plot (and I didn't know how to do that in ggplot2), so here's yet another way to view how the colour got clustered more visually.
+
+```{r plotly_3d, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+library(plotly)
+im_df %>% sample_n(size=2000) %>% 
+  plot_ly(x = ~red, y=~blue, z=~green, color=~cluster_num, colors=my_colour, size=~value) %>%
+  add_markers()   
+
+```
+
+  
+
+
