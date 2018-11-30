@@ -1,0 +1,221 @@
+---
+title: 'Plotting Traditional Colours of Japan '
+author: Chisato
+date: '2018-11-29'
+slug: plotting-traditional-colours-of-japan
+categories:
+  - R
+tags:
+  - ggplot2
+  - wordcloud2
+  - rvest
+  - tidytext
+description: ''
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+I was curious to know what colours were [Traditional Colours of Japan](https://en.wikipedia.org/wiki/Traditional_colors_of_Japan).  One of the site I came across showing 465 palettes of Japanese colour is this one. [Japanese Site with 465 palettes of traditional colour](https://www.colordic.org/w/). While site displays colour beautifully, to see every colour you need to scroll quite bit, so I wanted to plot them using [ggplot2](https://ggplot2.tidyverse.org/). 
+
+
+First, I wanted to figure out if there's way to plot many different colours at once, but in somewhat organized manner.  So to experiment, I've randomly generated 3000 colours and decided to plot them in different way.  One way I've liked is to plot as below.  I thought it looks pretty when colours with same hue are sort of clustered together! 
+
+```{r Colourful_Flower, echo=FALSE, fig.height=8, fig.width=16, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+library(tidyverse)
+
+
+# rgb2hsv function is great, but couldn't figure out how to use it with data frame...
+my_hex2rgb <- function(hex,...){
+  mat <- col2rgb(hex)
+  df <- tibble(
+    r=mat[1,1],
+    g=mat[2,1],
+    b=mat[3,1]
+  )
+}
+
+## function to convert RGB to HSV
+my_rgb2hsv <- function(r,g,b,maxColorValue=255,...){
+  mat <- rgb2hsv(r=r,g=g,b=b,maxColorValue=maxColorValue)
+  df <- tibble(
+    h=mat[1,1],
+    s=mat[2,1],
+    v=mat[3,1]
+  )
+}
+
+## golden angle 
+g_ang <- pi*(3-sqrt(5))
+
+## randomly generate r,g,b value and convert them to HSV.
+test_df <- tibble(
+  r=runif(3000,min=0,max=255),
+  g=runif(3000,min=0,max=255),
+  b=runif(3000,min=0,max=255)
+)%>% 
+  mutate(hsv_df = pmap(.,my_rgb2hsv)) %>% 
+  unnest(hsv_df) %>% 
+  mutate(hex=hsv(h,s,v),
+         hue_group = factor(cut_width(h,width=1/10, boundary=0),
+                          labels=c("Red/Yellow","Yellow","Yellow/Green","Green","Green/Blue","Blue","Blue/Purple","Purple","Puple/Red","Red"))) %>%
+  group_by(hue_group) %>%
+  mutate(t=row_number(v),
+         #t=row_number(s),
+         x=sqrt(t)*cos(t*g_ang),
+         y=sqrt(t)*sin(t*g_ang))
+
+test_df %>% 
+  ggplot(aes(x=x,y=y,color=hex)) + 
+  geom_point(size=3) + 
+  scale_color_identity() +
+  theme_void() + coord_fixed() +
+  scale_size_continuous(range=c(5,10)) +
+  facet_wrap(~hue_group, ncol=5)
+
+
+```
+
+
+## Get HEX value from the [website](https://www.colordic.org/w/) using [rvest](https://cran.r-project.org/web/packages/rvest/)
+
+Below is to get colour values from website, and convert hex value to HSV, so that I can group colours by "hue" value. 
+
+```{r haRvesting, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+library(rvest)
+color_w <- read_html("https://www.colordic.org/w/")
+#color_y <- read_html("https://www.colordic.org/y/")
+tmp <-color_w %>% html_nodes("td")
+
+color_jpn <- tibble(
+  hex= tmp %>% html_attr("style") %>% str_remove(.,"background-color:"),
+  yomi = tmp %>% html_nodes("span") %>% html_text(),
+  name = tmp %>% html_nodes("a") %>% html_text()
+)
+
+## clean name name as name includes everything in td...
+color_jpn <-color_jpn %>% 
+  mutate(name=str_remove(str_remove(name,yomi),hex))
+
+## I couldn't figure out how to do this in one step... Hex to HSV...
+## convert Hexvalue to RGB first
+color_jpn_df <-color_jpn %>% 
+  mutate(rgb_list = map(hex,my_hex2rgb)) %>% unnest(rgb_list)
+## Then convert RGB to HSV... 
+color_jpn_df <-color_jpn_df %>% 
+  mutate(hsv_list = pmap(list(r,g,b),my_rgb2hsv)) %>% unnest(hsv_list)
+
+
+## Group into Hue Groups - I chose 10 groups.
+color_jpn_df <- color_jpn_df %>% 
+  mutate(hue_group=factor(cut_width(h,width=1/10, boundary=0),
+                          labels=c("Red/Yellow","Yellow","Yellow/Green","Green","Green/Blue","Blue","Blue/Purple","Purple","Puple/Red","Red")))
+
+```
+
+## Fun Part! Making the flower with Japanese Traditional Colours
+
+```{r floweRit, echo=TRUE, fig.height=6, fig.width=12, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+## golden angle 
+g_ang <- pi*(3-sqrt(5))
+color_jpn_df <-color_jpn_df %>% 
+  group_by(hue_group) %>%
+  mutate(t=row_number(v),
+         #t=row_number(s),
+         x=sqrt(t)*cos(t*g_ang),
+         y=sqrt(t)*sin(t*g_ang),
+         g_size=n(),
+         h_mean=mean(h)) %>% 
+  ungroup()
+  
+color_jpn_df %>%  
+  ggplot(aes(x=x,y=y,color=hex)) + 
+  geom_point(aes(size=g_size)) + 
+  scale_color_identity() +
+  theme_void(base_family="Roboto Condensed") +
+  facet_wrap(~hue_group,ncol=5) +
+  coord_fixed() +
+  scale_size_continuous(range=c(4,3), guide="none") +
+  labs(caption="There's so many different types of orange colours... ",
+       title="465 Japanese Traditional Colours")
+
+
+```
+
+I thought it was interesting that there are lots of orange-ish colour and yellow colours, but not too many green or blue colours.  I am now wondering why... 
+
+## Chinese Characters Used in Traditional Colour Names 
+
+Since each of colours had name, I also was curious if there are some characters that are used more often than other.  Colour name was written in two ways in this website.   One in [Kanji](https://en.wikipedia.org/wiki/Kanji) and other in [Hiragana](https://en.wikipedia.org/wiki/Hiragana). 
+
+I love [wordcloud2](https://cran.r-project.org/web/packages/wordcloud2/vignettes/wordcloud.html) to visualize the wordcloud, so I can see which characters appears more often the others. 
+
+```{r Kanji_wordcloud, echo=TRUE, fig.height=8, fig.width=12, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+library(wordcloud2)
+library(tidytext)
+
+color_jpn_tidy <- color_jpn_df %>% 
+  ungroup() %>% select(yomi,name,hex,hue_group,h_mean) %>% 
+  mutate(hue_group_hex = hsv(h_mean,0.8,0.8)) %>%
+  unnest_tokens(word,name,token="characters")
+
+## What characters are often used in colour names?
+color_jpn_tidy %>% 
+  count(word,sort=T) %>% 
+  mutate(n=sqrt(n)) %>%  ## if I don't transform then 色 just gets displayed too big, and I can't see other characters...  So I've used the hack.
+  wordcloud2(fontFamily="Hiragino Sans W6", ## this gets ignored in website
+             minSize=0.1, size=2,
+             color=sample(color_jpn_df$hex),  ## just use random colours out of japanese colour palette!
+             rotateRatio=0)
+
+color_jpn_tidy %>% count(word,sort=T) %>% head(10)
+
+```
+
+It's interesting that character "色" literally means "Colour" is used in the name! It appeared 206 times. The one I'm quite intrigued by is character "鼠" (rat or mouse). It appeared 34 times in following colour names.  
+
+桜鼠 鴇鼠 利休鼠 湊鼠 錆鼠 薄梅鼠 藍鼠 暁鼠 牡丹鼠 藤鼠 紺鼠 薄鼠 鳩羽鼠 桔梗鼠 紫鼠 葡萄鼠 梅鼠 濃鼠 紅消鼠 薄雲鼠 茶鼠 江戸鼠 柳鼠 白梅鼠 白鼠 絹鼠 深川鼠 銀鼠 青磁鼠 素鼠 鼠色 源氏鼠 丼鼠 千草鼠
+
+```{r mousey_colour, echo=FALSE, fig.height=2, fig.width=12, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+color_jpn_df %>% filter(str_detect(name,"鼠")) %>%
+  ggplot(aes(x=name,y=1)) + geom_tile(aes(fill=hex)) + scale_fill_identity() +
+  theme_void(base_family="Hiragino Sans W5") + 
+  labs(title="Colour Name with 鼠 (rat or mouse) in it") 
+
+color_jpn_df %>% filter(str_detect(name,"紫")) %>%
+  ggplot(aes(x=name,y=1)) + geom_tile(aes(fill=hex)) + scale_fill_identity() +
+  theme_void(base_family="Hiragino Sans W5") + 
+  labs(title="Colour Name with 紫 (purple/violet) in it") 
+
+```
+
+## Hiragana Used in Colour Names
+
+And just for fun, I've also plotted to see which "Hiragana" appeared more frequently...
+
+```{r hiragana_usage, echo=FALSE, fig.height=5, fig.width=12, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+## Which Hiragana are often used in colour names?
+color_jpn_tidy_yomi <- color_jpn_df %>% 
+  ungroup() %>% select(yomi,name,hex) %>% 
+  unnest_tokens(word,yomi,token="characters")
+
+
+color_jpn_tidy_yomi %>% count(word,hex) %>%
+  ggplot(aes(x=word, y=n)) +
+  geom_col(aes(fill=hex), size=0.01, color="#ffffff") +
+  geom_text(aes(label=word),
+            family="Hiragino Sans W5",vjust=0, size=5, 
+            data=color_jpn_tidy_yomi %>% count(word)) +
+  theme_void() +
+  scale_fill_identity() +
+  expand_limits(y=300) 
+
+```
+

@@ -1,0 +1,133 @@
+---
+title: 'Plotting Traditional Colours of Japan '
+author: Chisato
+date: '2018-11-29'
+slug: plotting-traditional-colours-of-japan
+categories:
+  - R
+tags:
+  - ggplot2
+  - wordcloud2
+  - rvest
+  - tidytext
+description: ''
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+<script src="/rmarkdown-libs/htmlwidgets/htmlwidgets.js"></script>
+<link href="/rmarkdown-libs/wordcloud2/wordcloud.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/wordcloud2/wordcloud2-all.js"></script>
+<script src="/rmarkdown-libs/wordcloud2/hover.js"></script>
+<script src="/rmarkdown-libs/wordcloud2-binding/wordcloud2.js"></script>
+
+
+<p>I was curious to know what colours were <a href="https://en.wikipedia.org/wiki/Traditional_colors_of_Japan">Traditional Colours of Japan</a>. One of the site I came across showing 465 palettes of Japanese colour is this one. <a href="https://www.colordic.org/w/">Japanese Site with 465 palettes of traditional colour</a>. While site displays colour beautifully, to see every colour you need to scroll quite bit, so I wanted to plot them using <a href="https://ggplot2.tidyverse.org/">ggplot2</a>.</p>
+<p>First, I wanted to figure out if there’s way to plot many different colours at once, but in somewhat organized manner. So to experiment, I’ve randomly generated 3000 colours and decided to plot them in different way. One way I’ve liked is to plot as below. I thought it looks pretty when colours with same hue are sort of clustered together!</p>
+<p><img src="/post/2018-11-29-plotting-traditional-colours-of-japan_files/figure-html/Colourful_Flower-1.png" width="1536" /></p>
+<div id="get-hex-value-from-the-website-using-rvest" class="section level2">
+<h2>Get HEX value from the <a href="https://www.colordic.org/w/">website</a> using <a href="https://cran.r-project.org/web/packages/rvest/">rvest</a></h2>
+<p>Below is to get colour values from website, and convert hex value to HSV, so that I can group colours by “hue” value.</p>
+<pre class="r"><code>library(rvest)
+color_w &lt;- read_html(&quot;https://www.colordic.org/w/&quot;)
+#color_y &lt;- read_html(&quot;https://www.colordic.org/y/&quot;)
+tmp &lt;-color_w %&gt;% html_nodes(&quot;td&quot;)
+
+color_jpn &lt;- tibble(
+  hex= tmp %&gt;% html_attr(&quot;style&quot;) %&gt;% str_remove(.,&quot;background-color:&quot;),
+  yomi = tmp %&gt;% html_nodes(&quot;span&quot;) %&gt;% html_text(),
+  name = tmp %&gt;% html_nodes(&quot;a&quot;) %&gt;% html_text()
+)
+
+## clean name name as name includes everything in td...
+color_jpn &lt;-color_jpn %&gt;% 
+  mutate(name=str_remove(str_remove(name,yomi),hex))
+
+## I couldn&#39;t figure out how to do this in one step... Hex to HSV...
+## convert Hexvalue to RGB first
+color_jpn_df &lt;-color_jpn %&gt;% 
+  mutate(rgb_list = map(hex,my_hex2rgb)) %&gt;% unnest(rgb_list)
+## Then convert RGB to HSV... 
+color_jpn_df &lt;-color_jpn_df %&gt;% 
+  mutate(hsv_list = pmap(list(r,g,b),my_rgb2hsv)) %&gt;% unnest(hsv_list)
+
+
+## Group into Hue Groups - I chose 10 groups.
+color_jpn_df &lt;- color_jpn_df %&gt;% 
+  mutate(hue_group=factor(cut_width(h,width=1/10, boundary=0),
+                          labels=c(&quot;Red/Yellow&quot;,&quot;Yellow&quot;,&quot;Yellow/Green&quot;,&quot;Green&quot;,&quot;Green/Blue&quot;,&quot;Blue&quot;,&quot;Blue/Purple&quot;,&quot;Purple&quot;,&quot;Puple/Red&quot;,&quot;Red&quot;)))</code></pre>
+</div>
+<div id="fun-part-making-the-flower-with-japanese-traditional-colours" class="section level2">
+<h2>Fun Part! Making the flower with Japanese Traditional Colours</h2>
+<pre class="r"><code>## golden angle 
+g_ang &lt;- pi*(3-sqrt(5))
+color_jpn_df &lt;-color_jpn_df %&gt;% 
+  group_by(hue_group) %&gt;%
+  mutate(t=row_number(v),
+         #t=row_number(s),
+         x=sqrt(t)*cos(t*g_ang),
+         y=sqrt(t)*sin(t*g_ang),
+         g_size=n(),
+         h_mean=mean(h)) %&gt;% 
+  ungroup()
+  
+color_jpn_df %&gt;%  
+  ggplot(aes(x=x,y=y,color=hex)) + 
+  geom_point(aes(size=g_size)) + 
+  scale_color_identity() +
+  theme_void(base_family=&quot;Roboto Condensed&quot;) +
+  facet_wrap(~hue_group,ncol=5) +
+  coord_fixed() +
+  scale_size_continuous(range=c(4,3), guide=&quot;none&quot;) +
+  labs(caption=&quot;There&#39;s so many different types of orange colours... &quot;,
+       title=&quot;465 Japanese Traditional Colours&quot;)</code></pre>
+<p><img src="/post/2018-11-29-plotting-traditional-colours-of-japan_files/figure-html/floweRit-1.png" width="1152" /></p>
+<p>I thought it was interesting that there are lots of orange-ish colour and yellow colours, but not too many green or blue colours. I am now wondering why…</p>
+</div>
+<div id="chinese-characters-used-in-traditional-colour-names" class="section level2">
+<h2>Chinese Characters Used in Traditional Colour Names</h2>
+<p>Since each of colours had name, I also was curious if there are some characters that are used more often than other. Colour name was written in two ways in this website. One in <a href="https://en.wikipedia.org/wiki/Kanji">Kanji</a> and other in <a href="https://en.wikipedia.org/wiki/Hiragana">Hiragana</a>.</p>
+<p>I love <a href="https://cran.r-project.org/web/packages/wordcloud2/vignettes/wordcloud.html">wordcloud2</a> to visualize the wordcloud, so I can see which characters appears more often the others.</p>
+<pre class="r"><code>library(wordcloud2)
+library(tidytext)
+
+color_jpn_tidy &lt;- color_jpn_df %&gt;% 
+  ungroup() %&gt;% select(yomi,name,hex,hue_group,h_mean) %&gt;% 
+  mutate(hue_group_hex = hsv(h_mean,0.8,0.8)) %&gt;%
+  unnest_tokens(word,name,token=&quot;characters&quot;)
+
+## What characters are often used in colour names?
+color_jpn_tidy %&gt;% 
+  count(word,sort=T) %&gt;% 
+  mutate(n=sqrt(n)) %&gt;%  ## if I don&#39;t transform then 色 just gets displayed too big, and I can&#39;t see other characters...  So I&#39;ve used the hack.
+  wordcloud2(fontFamily=&quot;Hiragino Sans W6&quot;, ## this gets ignored in website
+             minSize=0.1, size=2,
+             color=sample(color_jpn_df$hex),  ## just use random colours out of japanese colour palette!
+             rotateRatio=0)</code></pre>
+<div id="htmlwidget-1" style="width:1152px;height:768px;" class="wordcloud2 html-widget"></div>
+<script type="application/json" data-for="htmlwidget-1">{"x":{"word":["色","茶","鼠","紅","黄","青","紫","薄","白","赤","緑","花","藍","子","紺","黒","染","浅","藤","戸","梅","竹","若","柿","灰","草","葉","丹","納","葱","金","錆","香","御","朱","柳","海","深","煤","緋","葡","褐","鉄","松","枯","桜","橡","淡","萄","萌","の","休","利","千","山","朽","栗","桃","桔","梗","水","濃","璃","磁","縹","羽","蒲","鳶","墨","丁","唐","土","支","桑","樺","櫨","江","瑠","皮","真","碧","空","群","老","胡","芳","菜","蘇","赭","鈍","銀","鳩","鴇","鶸","が","ら","中","人","代","卵","召","吹","天","媚","小","常","憲","掛","暗","木","柑","橙","檜","歳","油","法","洗","消","渋","焦","牡","珊","瑚","生","磐","粉","素","練","肉","苗","菖","菫","葵","虫","蜜","豆","郎","鉛","雀","雲","鬱","鶯","麦","々","き","せ","と","り","一","三","丼","乳","二","五","井","亜","京","今","仙","伝","似","伽","倍","入","公","切","刈","勿","十","半","卯","参","古","向","器","団","国","塵","壁","夏","女","字","安","宍","宗","実","寛","岩","岸","川","州","幸","弁","後","忘","成","抹","撫","斎","斗","斤","新","日","春","晶","暁","曙","月","本","杏","杜","東","杷","枇","柄","柴","根","桂","榔","榛","様","橋","檀","檗","檳","氏","汁","洒","涅","湊","源","滅","漆","潤","濡","炭","烏","煉","煎","照","蒸","熨","牙","狐","猩","玉","珀","琥","瓦","瓶","甚","留","百","目","石","砂","砥","砺","秘","種","竜","糸","紙","絨","絹","纁","羅","羊","羹","翠","翡","翫","考","肌","肥","胆","脂","臙","舛","芝","芥","芽","苑","苔","英","茄","茜","萱","落","蕎","薇","薔","蘭","虹","蜀","蜂","蝋","裏","襖","覗","象","賊","路","躅","躑","返","退","遠","野","銅","錫","長","防","雄","霞","露","革","韓","飴","駝","駱","高","鳥","鵞","麗","麹","麻","黍"],"freq":[14.3527000944073,7.41619848709566,5.8309518948453,5.29150262212918,5,4.69041575982343,4.58257569495584,4.58257569495584,4.47213595499958,4,3.87298334620742,3.74165738677394,3.60555127546399,3.46410161513775,3.46410161513775,3.46410161513775,3.3166247903554,3.3166247903554,3.3166247903554,3.16227766016838,3.16227766016838,3,3,2.82842712474619,2.82842712474619,2.82842712474619,2.82842712474619,2.64575131106459,2.64575131106459,2.64575131106459,2.64575131106459,2.64575131106459,2.64575131106459,2.44948974278318,2.44948974278318,2.44948974278318,2.44948974278318,2.44948974278318,2.44948974278318,2.44948974278318,2.44948974278318,2.44948974278318,2.44948974278318,2.23606797749979,2.23606797749979,2.23606797749979,2.23606797749979,2.23606797749979,2.23606797749979,2.23606797749979,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1.73205080756888,1.73205080756888,1.73205080756888,1.73205080756888,1.73205080756888,1.73205080756888,1.73205080756888,1.73205080756888,1.73205080756888,1.73205080756888,1.73205080756888,1.73205080756888,1.73205080756888,1.73205080756888,1.73205080756888,1.73205080756888,1.73205080756888,1.73205080756888,1.73205080756888,1.73205080756888,1.73205080756888,1.73205080756888,1.73205080756888,1.73205080756888,1.73205080756888,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1.4142135623731,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"fontFamily":"Hiragino Sans W6","fontWeight":"bold","color":["#726250","#fbd26b","#bb5520","#d69090","#d4dcd6","#53727d","#f19072","#d8e698","#95859c","#884898","#a73836","#956f29","#a69425","#efcd9a","#93b881","#946243","#aa4f37","#68be8d","#5b7e91","#475950","#cc7eb1","#9d896c","#a8c97f","#eb9b6f","#a89dac","#bed2c3","#895b8a","#485859","#4f455c","#c4a3bf","#839b5c","#f3f3f2","#203744","#281a14","#ada250","#fef4f4","#9d5b8b","#a22041","#f7bd8f","#250d00","#e95464","#f7fcfe","#55295b","#17184b","#0f2350","#e95295","#cd5e3c","#ae7c4f","#80aba9","#f3bf88","#917347","#856859","#007bbb","#a86f4c","#745399","#b7282e","#9fa0a0","#716246","#e9e4d4","#5654a2","#867ba9","#fddea5","#c3d825","#99ab4e","#98d98e","#a6a5c4","#888084","#74325c","#e7e7eb","#f6bfbc","#b94047","#543f32","#715c1f","#bf794e","#507ea4","#524748","#494a41","#e9dfe5","#583822","#d6c6af","#ec6d51","#887f7a","#f1bf99","#915c8b","#a59aca","#9f6f55","#e6cde3","#824880","#8491c3","#b4866b","#6f514c","#16160e","#433d3c","#d4acad","#5f414b","#38a1db","#cd8c5c","#56564b","#2b2b2b","#c8c2c6","#c1e4e9","#c85179","#8d6449","#e17b34","#c7dc68","#a25768","#f19072","#6d3c32","#ea5506","#b88884","#89c3eb","#bce2e8","#ee836f","#eec362","#2c4f54","#555647","#a2d7dd","#f8b500","#e6b422","#c38743","#460e44","#e49e61","#ee827c","#93b69c","#2f5d50","#474b42","#9e8b8e","#223a70","#1e50a2","#80989b","#8b968d","#ffea00","#383c3c","#f8e58c","#badcad","#6c2c2f","#69b076","#ba2636","#5a5359","#f1bf99","#bc64a4","#dcd3b2","#f4b3c2","#bfa46f","#e2041b","#e8ecef","#2792c3","#94846a","#a19361","#43676b","#fef263","#d3cbc6","#a8bf93","#3eb370","#fcc800","#ce5242","#fce2c4","#888e7e","#664032","#7a4171","#5c9291","#eaf4fc","#c5c56a","#a22041","#b79b5b","#b3ada0","#b44c97","#82ae46","#b9d08b","#640125","#513743","#0094c8","#9e9478","#706caa","#dd7a56","#ebe1a9","#6a5d21","#d7003a","#7b7c7d","#f09199","#8f8667","#a16d5d","#4d5aaf","#2ca9e1","#b0ca71","#bf783a","#965036","#eb6238","#b77b57","#5383c3","#683f36","#918754","#7b8d42","#00a381","#241a08","#ffec47","#ee7948","#19448e","#852e19","#6f4b3e","#ad7d4c","#478384","#e0c38c","#ddbb99","#f5b1aa","#e9546b","#c37854","#d0576b","#9790a4","#333631","#726d40","#dbd0e6","#765c47","#84a2d4","#3b7960","#7b4741","#783c1d","#164a84","#005243","#4a488e","#dcd6d9","#2e2930","#ad7e4e","#a0d8ef","#393e4f","#e5abbe","#f2a0a1","#0095d9","#db8449","#180614","#8a3319","#44617b","#eae5e3","#a69abd","#762f07","#9ba88d","#028760","#c39143","#d9a62e","#fbfaf5","#3e62ad","#98623c","#edd3a1","#ebf6f7","#84b9cb","#f7b977","#1f3134","#f0908d","#8f2e14","#ffd900","#fde8d0","#4d4398","#93ca76","#4d4c61","#f8b862","#674196","#f39800","#fdeff2","#727171","#c0c6c9","#544a47","#e4d2d8","#47585c","#e6b422","#b98c46","#bed3ca","#522f60","#a86965","#674598","#634950","#deb068","#adadad","#d4dcda","#d0af4c","#c9171e","#5b6356","#fbca4d","#7d7d7d","#f8fbf8","#4c6473","#bbbcde","#95949a","#efcd9a","#e45e32","#6b6f59","#6e7955","#007b43","#9e3d3f","#8c8861","#c53d43","#92b5a9","#a1a46d","#abced8","#954e2a","#68699b","#887938","#ec6800","#474a4d","#f4dda5","#7058a3","#a3a3a2","#ffdb4f","#6c3524","#c1d8ac","#5a79ba","#8c7042","#e5e4e6","#69821b","#d57c6b","#ea5506","#698aab","#eb6101","#d0826c","#e09e87","#432f2f","#c099a0","#ec6800","#00a497","#8491c3","#f08300","#595455","#7b6c3e","#b8d200","#938b4b","#9f563a","#cbb994","#95483f","#302833","#a59564","#493759","#d3ccd6","#008899","#bc763c","#ffffff","#d7a98c","#897858","#d6e9ca","#d3381c","#ab6953","#8c6450","#aacf53","#165e83","#71686c","#752100","#f5b199","#efab93","#2a83a2","#cb8347","#dcdddd","#00a3af","#928178","#c89932","#fffffc","#f9c89b","#000b00","#f8f4e6","#a58f86","#d3cfd9","#316745","#59b9c6","#83ccd2","#ec6d71","#cca6bf","#d7cf3a","#f7c114","#c85554","#b68d4c","#594255","#e0815e","#006e54","#e597b2","#426579","#9f563a","#767c6b","#c8d5bb","#eb6ea5","#949495","#b55233","#705b67","#b28c6e","#f6b894","#965042","#e6eae3","#f3f3f3","#928c36","#afafb0","#8a3b00","#f2f2b0","#ae7c58","#ad7d4c","#ed6d3d","#d66a35","#2a4073","#65318e","#ee7800","#96514d","#fcd575","#00552e","#c7b370","#a99e93","#595857","#aa4c8f","#bb5535","#d3a243","#e83929","#393f4c","#c97586","#5a544b","#4c6cb3","#e198b4","#7ebea5","#fabf14","#38b48b","#455765","#ca8269","#f6ad49","#e0ebaf","#0d0015","#df7163","#274a78","#eebbcb","#ebd842","#d9333f","#ffd900","#c0a2c7","#fff1cf","#b48a76","#3a5b52","#47885e","#bb5548","#e7609e","#d8a373","#dccb18","#9079ad","#dddcd6","#bbc8e6","#769164","#e8d3c7","#192f60","#7ebeab","#e60033","#6c848d","#eaedf7","#88cb7f","#773c30","#2b2b2b","#a6c8b2","#f2c9ac","#f0cfa0","#97a791","#4d5aaf","#1c305c","#c8c2be","#3f312b","#cee4ae","#554738","#9ea1a3","#e4dc8a","#ede4cd","#9a493f","#e4ab9b","#6b7b6e","#f5e56b","#e8d3d1","#524e4d"],"minSize":0.1,"weightFactor":25.0823885144982,"backgroundColor":"white","gridSize":0,"minRotation":-0.785398163397448,"maxRotation":0.785398163397448,"shuffle":true,"rotateRatio":0,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
+<pre class="r"><code>color_jpn_tidy %&gt;% count(word,sort=T) %&gt;% head(10)</code></pre>
+<pre><code>## # A tibble: 10 x 2
+##    word      n
+##    &lt;chr&gt; &lt;int&gt;
+##  1 色      206
+##  2 茶       55
+##  3 鼠       34
+##  4 紅       28
+##  5 黄       25
+##  6 青       22
+##  7 紫       21
+##  8 薄       21
+##  9 白       20
+## 10 赤       16</code></pre>
+<p>It’s interesting that character “色” literally means “Colour” is used in the name! It appeared 206 times. The one I’m quite intrigued by is character “鼠” (rat or mouse). It appeared 34 times in following colour names.</p>
+<p>桜鼠 鴇鼠 利休鼠 湊鼠 錆鼠 薄梅鼠 藍鼠 暁鼠 牡丹鼠 藤鼠 紺鼠 薄鼠 鳩羽鼠 桔梗鼠 紫鼠 葡萄鼠 梅鼠 濃鼠 紅消鼠 薄雲鼠 茶鼠 江戸鼠 柳鼠 白梅鼠 白鼠 絹鼠 深川鼠 銀鼠 青磁鼠 素鼠 鼠色 源氏鼠 丼鼠 千草鼠</p>
+<p><img src="/post/2018-11-29-plotting-traditional-colours-of-japan_files/figure-html/mousey_colour-1.png" width="1152" /><img src="/post/2018-11-29-plotting-traditional-colours-of-japan_files/figure-html/mousey_colour-2.png" width="1152" /></p>
+</div>
+<div id="hiragana-used-in-colour-names" class="section level2">
+<h2>Hiragana Used in Colour Names</h2>
+<p>And just for fun, I’ve also plotted to see which “Hiragana” appeared more frequently…</p>
+<p><img src="/post/2018-11-29-plotting-traditional-colours-of-japan_files/figure-html/hiragana_usage-1.png" width="1152" /></p>
+</div>
