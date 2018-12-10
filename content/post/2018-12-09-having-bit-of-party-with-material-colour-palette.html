@@ -1,0 +1,202 @@
+---
+title: Having bit of party with Material Colour Palette
+author: Chisato
+date: '2018-12-09'
+slug: having-bit-of-party-with-material-colour-palette
+categories:
+  - R
+tags:
+  - ggplot2
+  - patchwork
+  - colour
+  - imager
+description: ''
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+
+
+<p>Continuing on with my “slight?” obsession with colours… I love colours in “<a href="https://material.io/tools/color/#!/?view.left=0&amp;view.right=0&amp;primary.color=9C27B0">Material Colour Palette</a>”. There various website that will lets you grab the colours by clicking, such as this <a href="https://www.materialui.co/colors">one</a>, but I just wanted to have little handy cheet sheet for myself, so I’ve decided I’ll do that using R &amp; my favourite <a href="https://ggplot2.tidyverse.org/">ggplot2</a>.</p>
+<div id="getting-colours-out-of-image-using-package-imager" class="section level2">
+<h2>Getting colours out of image using package “imager”</h2>
+<p>After quick search, I came across <a href="https://www.materialui.co/img/material-colors-thumb.png%22">image with all the material colour</a>, so first things I’ve tried is to get colours out of image using <a href="https://cran.r-project.org/web/packages/imager/index.html">imager</a>.</p>
+<pre class="r"><code>## Load up packages we&#39;ll use
+library(tidyverse)
+library(imager)
+library(patchwork)
+
+im &lt;- load.image(&quot;https://www.materialui.co/img/material-colors-thumb.png&quot;)
+#plot(im)
+
+## Convert Image to Data Frame with HSV value
+im_hsv &lt;-im %&gt;% RGBtoHSV() %&gt;%
+  as.data.frame(wide=&quot;c&quot;) %&gt;%
+  rename(h=c.1, s=c.2, v=c.3)
+
+## Convert Image to Data Frame with RGB value
+im_rgb &lt;- im %&gt;% 
+  as.data.frame(wide=&quot;c&quot;) %&gt;%
+  rename(red=c.1,green=c.2,blue=c.3) %&gt;%
+  mutate(hexvalue = rgb(red,green,blue)) ## you can create hexvalue using red, green blue value!
+
+## Might as well conver to grayscale, and get luminance. 
+## I;ll use luminance value to decide if I&#39;ll put black text vs white text later.
+im_grayscale &lt;- im %&gt;% grayscale() %&gt;%
+  as.data.frame() %&gt;%
+  rename(luminance=value)
+
+## I want to grab pixel from about middle of each cell
+mat_color &lt;- im_rgb %&gt;%
+  filter(x %in% as.integer(round(seq(1,19)*(400/19))-10) &amp;
+         y %in% as.integer(round(seq(1,11)*(225/11))-10) &amp; y&gt;10) %&gt;%
+  left_join(im_hsv) %&gt;%
+  left_join(im_grayscale) %&gt;%
+  mutate_at(c(&quot;x&quot;,&quot;y&quot;), dense_rank) %&gt;%
+  arrange(x,y) 
+
+
+col_group &lt;- c(&quot;red&quot;,&quot;pink&quot;,&quot;purple&quot;,&quot;deep purple&quot;,&quot;indigo&quot;,&quot;blue&quot;,&quot;light blue&quot;,&quot;cyan&quot;,&quot;teal&quot;,&quot;green&quot;,&quot;light green&quot;,&quot;lime&quot;,&quot;yellow&quot;,&quot;amber&quot;,&quot;orange&quot;,&quot;deep orange&quot;,&quot;brown&quot;,&quot;grey&quot;,&quot;blue grey&quot;)
+
+## Adding extra info to the table 
+mat_color &lt;- mat_color %&gt;% 
+  mutate(hue_group=factor(x, labels=col_group, ordered=T),
+         shade = factor(y, labels=c(50,seq(100,900, by=100)), ordered=T))
+
+## I could also save this as csv file too... :) 
+#mat_color %&gt;% write_csv(&quot;MaterialColour.csv&quot;)</code></pre>
+</div>
+<div id="creating-material-colour-palette-cheat-sheet" class="section level2">
+<h2>Creating Material Colour Palette Cheat Sheet</h2>
+<p>Now that I have the colours out of image in data frame, I can do fun stuff, plotting!! I should print this with colour printer, and have it as <a href="https://www.rstudio.com/resources/cheatsheets/">one of cheat sheet collection</a>.</p>
+<p>I’ve used luminance value of each colour to decide if I should place black text or white text over the colour. (I couldn’t figure out if there’s good rules to follow, but seems like luminance does the trick?!)</p>
+<pre class="r"><code>mat_color %&gt;% 
+  ggplot(aes(x=hue_group,y=shade)) +  ## I could also use x=x,y=y
+  geom_tile(aes(fill=hexvalue),color=&quot;white&quot;, size=0.1) +  ## i want to have very fine white line around each tiles.
+  scale_fill_identity(guide=&quot;none&quot;) +  
+  theme_void(base_family=&quot;Roboto Condensed&quot;) +
+  ## print out color hue name and shade
+  geom_text(aes(label=paste0(hue_group,&quot;-&quot;,shade), 
+                color=ifelse(luminance&gt;0.5,&quot;#000000&quot;,&quot;#ffffff&quot;)), ## about 48% opacity
+            family=&quot;Roboto Condensed&quot;, size=3, vjust=-2, lineheight=0.8, alpha=0.48) +
+  ## print out hesvalue - I&#39;ll use this the most, so print it with higher transparency
+  geom_text(aes(label=hexvalue, 
+                color=ifelse(luminance&gt;0.5,&quot;#000000&quot;,&quot;#ffffff&quot;)),  ## about 80% opacity
+            family=&quot;Roboto Condensed&quot;, fontface=&quot;bold&quot;,vjust=0, alpha=0.8) +
+  ## print out RGB &amp; HSV
+  geom_text(aes(label=paste0(&quot;\n(&quot;,round(red*255),&quot;,&quot;,round(blue*255),&quot;,&quot;,round(green*255),&quot;)\n(&quot;,
+                             round(h),&quot;,&quot;,round(s,1),&quot;,&quot;,round(v,1),&quot;)&quot;), 
+                color=ifelse(luminance&gt;0.5,&quot;#000000&quot;,&quot;#ffffff&quot;)), ## about 67% opacity
+            family=&quot;Roboto Condensed&quot;, size=3, vjust=1, lineheight=0.8, alpha=0.67) +
+  scale_color_identity() +
+  labs(x=&quot;&quot;,y=&quot;&quot;,title=&quot;&quot;, caption=&quot;Material Colour Palettes Hexvalue + RGB + HSV&quot;)</code></pre>
+<p><img src="/post/2018-12-09-having-bit-of-party-with-material-colour-palette_files/figure-html/materialColourCheatSheet-1.png" width="1536" /></p>
+<pre class="r"><code>## I can save as PNG file too with below line
+#ggsave(&quot;MaterialColorCheatSheet.png&quot;, width=16, height=9)</code></pre>
+</div>
+<div id="more-parrrty-time-with-colours" class="section level2">
+<h2>More Parrrty Time with Colours…</h2>
+<p>While plotting colour in rectangular is good…. I thought it’s a lot nicer to plot them as “<a href="https://en.wikipedia.org/wiki/Color_wheel">Colour Wheel</a>”.</p>
+<pre class="r"><code># Colour Wheel! 
+wheel_base &lt;-mat_color %&gt;% 
+  filter(!hue_group %in% c(&quot;brown&quot;,&quot;grey&quot;,&quot;blue grey&quot;)) %&gt;%  ## exclude brown, grey and blue grey group.
+  ggplot(aes(x=x, y=y)) +
+  geom_tile(aes(fill=hexvalue), color=&quot;white&quot;, size=0.1) +
+  scale_fill_identity(guide=&quot;none&quot;) +
+  coord_polar() +  ## Converting to polar coordinate does the trick!
+  theme_void(base_family=&quot;Roboto Condensed&quot;) +
+  labs(caption=&quot;Color Wheel using Material Design Colours&quot;)
+
+
+## Just experimenting with smaller strips on each colour tiles..
+wheel_base_w &lt;- wheel_base +
+  geom_tile(fill=&quot;#ffffffde&quot;,height=0.5, aes(width=v*0.5)) +
+  labs(caption=&quot;If you were to play white text... \nWhich ones can you see better?&quot;)
+
+wheel_base_b &lt;- wheel_base +
+  geom_tile(fill=&quot;#000000de&quot;,height=0.5, aes(width=v*0.5)) +
+  labs(caption=&quot;If you were to play black text... \nWhich ones can you see better?&quot;)
+
+## using &quot;patchwork&quot; package I can plot all 3 charts next to each other.
+wheel_base + wheel_base_w + wheel_base_b</code></pre>
+<p><img src="/post/2018-12-09-having-bit-of-party-with-material-colour-palette_files/figure-html/ColourWheel-1.png" width="1440" /></p>
+<p>I wanted to see if I can find pairs of colour that I like by shuffling the colours on smaller strips for fun too.</p>
+<pre class="r"><code>## Randomize Y
+a&lt;-wheel_base +
+  geom_tile(aes(fill=hexvalue,y=sample(y)), width=0.5, height=0.5) +
+  labs(caption=&quot;Randomness within Hue Group&quot;)
+
+b&lt;-wheel_base +
+  geom_tile(aes(fill=hexvalue,x=sample(x)), width=0.5, height=0.5) +
+  labs(caption=&quot;Randomness within Same Shade&quot;)
+
+## Random Colour Wheel
+c&lt;-wheel_base +
+  geom_tile(aes(fill=hexvalue,x=sample(x), y=sample(y,replace=T)), width=0.5, height=0.5) +
+  labs(caption=&quot;Randomness to see if i spot any pairs I like&quot;)
+
+a+b+c</code></pre>
+<p><img src="/post/2018-12-09-having-bit-of-party-with-material-colour-palette_files/figure-html/ColourWheel2-1.png" width="1440" /></p>
+</div>
+<div id="making-some-flowers-with-material-colour-palette" class="section level2">
+<h2>Making Some Flowers with Material Colour Palette</h2>
+<pre class="r"><code>## Just for fun, let&#39;s just make some flower with material colour palette!
+flower1&lt;-mat_color %&gt;%
+  arrange(shade,hue_group) %&gt;% mutate(t=row_number()) %&gt;%
+  ggplot(aes(x=sqrt(t) * cos(t), y=sqrt(t) * sin(t))) +
+  geom_point(aes(color=hexvalue, size=luminance)) +
+  #geom_text(aes(label=t), family=&quot;Avenir&quot;) +
+  scale_color_identity() +
+  coord_fixed() +
+  theme_void(base_family=&quot;Roboto Condensed&quot;) +
+  scale_size_continuous(range=c(3,8), guide=&quot;none&quot;) +
+  labs(caption=&quot;Sort by Shade, then Hue Group, Luminance as Size&quot;)
+
+
+## Just for fun, let&#39;s just make some flower with material colour palette!
+flower2&lt;-mat_color %&gt;%
+  arrange(hue_group,shade) %&gt;% mutate(t=row_number()) %&gt;%
+  ggplot(aes(x=sqrt(t) * cos(t), y=sqrt(t) * sin(t))) +
+  geom_point(aes(color=hexvalue, size=luminance)) +
+  scale_color_identity() +
+  coord_fixed() +
+  theme_void(base_family=&quot;Roboto Condensed&quot;) +
+  scale_size_continuous(range=c(3,8), guide=&quot;none&quot;) +
+  labs(caption=&quot;Sort by Hue Group, Then Shade, Luminance as Size&quot;)
+
+## ggplot2 has shape 1-25
+## 0-15 &amp; 20-24 are NOT filled shape
+
+flower3&lt;-mat_color %&gt;%
+  arrange(shade, hue_group) %&gt;% mutate(t=row_number()) %&gt;%
+  ggplot(aes(x=sqrt(t) * cos(t), y=sqrt(t) * sin(t))) +
+  geom_point(aes(color=hexvalue, shape=ifelse(x&lt;=15,x-1,x+5)), size=3, stroke=1.5) +
+  scale_color_identity() +
+  coord_fixed() +
+  theme_void(base_family=&quot;Roboto Condensed&quot;) +
+  scale_shape_identity() +
+  labs(caption=&quot;Mapping Hue Groups to Shapes for Fun&quot;)
+
+flower1 + flower2 + flower3</code></pre>
+<p><img src="/post/2018-12-09-having-bit-of-party-with-material-colour-palette_files/figure-html/FlowerLikeArt-1.png" width="1440" /></p>
+</div>
+<div id="one-last-one-for-now" class="section level2">
+<h2>One last one for now…</h2>
+<pre class="r"><code>## Final Random Art
+mat_color %&gt;% 
+  ggplot(aes(x=x,y=y)) + 
+  geom_tile(aes(fill=hexvalue, width=s*10, height=v*10, alpha=luminance)) +
+  scale_fill_identity() +
+  scale_alpha_continuous(guide=&quot;none&quot;, range=c(0,0.6)) +
+  theme_void() +
+  annotate(x=(max(mat_color$x)/2)+0.05,y=(max(mat_color$y)/2)-0.05, 
+           label=&quot;The End&quot;,
+           geom=&quot;text&quot;, family=&quot;Roboto Condensed&quot;, size=22, color=&quot;#000000de&quot;) +
+  annotate(x=max(mat_color$x)/2,y=max(mat_color$y)/2, 
+           label=&quot;The End&quot;,
+           geom=&quot;text&quot;, family=&quot;Roboto Condensed&quot;, size=22, color=&quot;#ffffffde&quot;) +
+  coord_cartesian(xlim=c(0,19), ylim=c(3,7))</code></pre>
+<p><img src="/post/2018-12-09-having-bit-of-party-with-material-colour-palette_files/figure-html/TheEnd-1.png" width="1440" /></p>
+</div>
