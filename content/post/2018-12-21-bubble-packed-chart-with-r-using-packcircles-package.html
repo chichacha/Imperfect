@@ -1,0 +1,190 @@
+---
+title: Bubble Packed Chart with R using packcircles package
+author: Chisato
+date: '2018-12-22'
+slug: bubble-packed-chart-with-r-using-packcircles-package
+categories:
+  - R
+tags:
+  - tidyverse
+  - packcircles
+  - imager
+  - scales
+description: ''
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+
+
+<p><a href="https://www.tableau.com/">Tableau</a> has chart type called “<a href="https://onlinehelp.tableau.com/current/pro/desktop/en-us/buildexamples_bubbles.htm">Packed Bubble Chart</a>”, while I haven’t really utilized packed bubble chart much, I always thought they are fun and beautiful. I wanted to try creating same chart using R, and I came across package called <a href="https://cran.r-project.org/web/packages/packcircles/index.html">packcircles</a>.</p>
+<p>Reading vignettes was really helpful to figure out how to use the package!!<br />
+- <a href="https://cran.r-project.org/web/packages/packcircles/vignettes/intro.html">introduction vignettes</a> - <a href="https://cran.r-project.org/web/packages/packcircles/vignettes/progressive_packing.html">Progressive packing vignettes</a> to get started on using this package.</p>
+<div id="creating-bubble-packed-abstract-art" class="section level2">
+<h2>Creating Bubble Packed Abstract Art…</h2>
+<p>I didn’t really have data sets handy to use it for this type of chart, so I’ve decided to play around with image. Initially I wanted to create images used to <a href="https://www.colour-blindness.com/colour-blindness-tests/ishihara-colour-test-plates/">test colour blindness</a>, but I wasn’t sure what colour palettes should be used to create these images.</p>
+<p>Since I currently love <a href="https://support.apple.com/en-ca/HT208986">Memoji</a> on my iPhone, so I’ve decided I’d use Memoji image as base to create abstract art.</p>
+<div id="steps" class="section level3">
+<h3>Steps</h3>
+<ul>
+<li>Step 1. Import image and convert image to data frame, so you can extract colour value (RGB)</li>
+<li>Step 2. Genearate circle packing layout using circleProgressiveLayout function. The resulting data frame here contains center points of circle (x,y) and its radius.</li>
+<li>Step 3. Convert x &amp; y coordinate from data frame in step 2 so that you can figure out what colour to fill the circle. i.e. Data Frame from Step 1 and Step 2 should be joined, so you need to adjust the scaling.</li>
+<li>Step 4. Create data frame using circleLayoutVertices function for plotting with ggplot2. The resulting data frame now have specified amount of points per indivisual circle so that you can use geom_path or geom_polygon to draw.<br />
+</li>
+<li>Step 5. Join data from Step 4 with colour value from Step 3, so that you can use geom_polygon with fill value to colour the circle!</li>
+</ul>
+<pre class="r"><code>library(tidyverse) ## I need tidyverse for everything :) 
+library(imager) ## to create data frame from image
+library(scales) ## rescale function is so handy!
+library(packcircles) ## making circle packing easy! 
+
+## Step 1
+im &lt;- load.image(&quot;https://farm5.staticflickr.com/4868/45503751845_948f121563_z.jpg&quot;) #memoji2
+
+
+## if you want to take a look at image.. :) 
+#plot(im)
+
+## Convert Image into Data Frame
+im.df.colour &lt;- im %&gt;%
+  as.data.frame(wide=&quot;c&quot;) %&gt;% ## so that rgb value is in separate column.
+  rename(im_x=x,im_y=y) %&gt;%
+  mutate(hex=rgb(c.1,c.2,c.3))
+
+## Step 2 using circleProgressiveLayout function.
+## Generate circle packing layout using rbeta distribution as size of circles
+pack_layout &lt;- circleProgressiveLayout(rbeta(2000,1,2), sizetype=&#39;area&#39;) %&gt;% 
+## Step 3 - I want to figure out what colour to use, so I want layout &amp; image df to have same scaling. 
+  mutate(im_x=floor(rescale(x,to=range(im.df.colour$im_x))),  
+         im_y=floor(rescale(y,to=range(im.df.colour$im_y))),
+         ## also generate id, so i can join the data frame easily later!
+         id=row_number()) %&gt;% 
+  inner_join(im.df.colour %&gt;% select(im_x,im_y,hex), by=c(&quot;im_x&quot;,&quot;im_y&quot;))
+
+
+## Step 4 
+## Using the layout above create data frame using circleLayoutVertices function so that you can plot circle using ggplot2
+data_gg &lt;- circleLayoutVertices(pack_layout) %&gt;% 
+  inner_join(pack_layout %&gt;% select(id,hex), by=c(&quot;id&quot;))
+
+## Step 5
+data_gg %&gt;% 
+  ggplot(aes(x=x,y=y,group=id)) +
+  geom_polygon(aes(fill=hex)) +  
+  scale_fill_identity() + 
+  coord_equal() +
+  scale_y_reverse() +  ## you need to reverse y-axis
+  theme_void() </code></pre>
+<p><img src="/post/2018-12-21-bubble-packed-chart-with-r-using-packcircles-package_files/figure-html/unnamed-chunk-1-1.png" width="576" /></p>
+<div class="figure">
+<img src="/post/2018-12-21-bubble-packed-chart-with-r-using-packcircles-package_files/MemojiArt.png" alt="Just few more of these…" style="width:100.0%" />
+<p class="caption">Just few more of these…</p>
+</div>
+<p>Good image to use is square image with above, but it’s fun turning into logo &amp; images!!!</p>
+<p>Below are just few more things I’ve experimented with circle packing technique…</p>
+</div>
+</div>
+<div id="experimenting-with-rgb-colour" class="section level2">
+<h2>Experimenting with RGB Colour…</h2>
+<pre class="r"><code>## Generate layout from 500 uniformly distributed number 0 to 1 as area.
+pack_layout1 &lt;- circleProgressiveLayout(runif(n=500), sizetype=&#39;area&#39;)
+
+## I want to colour each circle with different rgb value, so I&#39;ll append data 
+pack_layout1 &lt;- pack_layout1 %&gt;% 
+  mutate(hex_r=rgb(1,rescale(x),rescale(y),rescale(radius)),
+         hex_g=rgb(rescale(x),1,rescale(y),rescale(radius)),
+         hex_b=rgb(rescale(x),rescale(y),1,rescale(radius)),
+         id = row_number()) ## append id, so you can join this table later. 
+
+## pack_layout1 contains data where center of circle should be placed with its radius.
+## Now generate data so that you can actually draw circle using ggplot2
+data_gg1 &lt;- circleLayoutVertices(pack_layout1, npoints=25) 
+## notice now you have for each circle, you have 25 x and y coordinates to draw circle!
+
+
+## Since the colour I want to use for each circle is retained in pack_layout1 data frame, I want to combine the info.  Also I want to create 3 sets of different colouring. I want to make long table. 
+data_gg1 &lt;- data_gg1 %&gt;% inner_join(pack_layout1 %&gt;% select(-x,-y), by=c(&quot;id&quot;))
+
+## I want to create 3 different coloured variations, so convert above table to long format. 
+data_gg_long &lt;- data_gg1 %&gt;% 
+  gather(key=&quot;colour_group&quot;,value=&quot;hex&quot;,hex_r:hex_b) %&gt;%
+  mutate(colour_group = factor(colour_group,levels=c(&quot;hex_r&quot;,&quot;hex_g&quot;,&quot;hex_b&quot;), 
+                               labels=c(&quot;keeping red value constant\nmore green to the right - more blue to the top\nsmaller circle has more transparency&quot;,
+                                       &quot;keeping green value constant\nmore red to the right - more blue to the top\nsmaller circle has more transparency&quot;,
+                                       &quot;keeping blue value constant\nmore red to the right - more green to the top\nsmaller circle has more transparency&quot;)))
+
+
+## Now the fun part!
+data_gg_long %&gt;%
+  ggplot(aes(x=x,y=y)) + 
+  geom_polygon(aes(group=id),fill=&quot;#ffffff&quot;) +  ## first draw all circle white.
+  geom_polygon(aes(group=id, fill=hex)) + ## then colour with value with some transparency
+  coord_equal() +
+  theme_void() +
+  scale_fill_identity() +
+  scale_y_reverse() +
+  facet_wrap(~colour_group) +
+  theme(plot.background=element_rect(fill=&quot;#000000de&quot;),
+        strip.text=element_text(family=&quot;Roboto Condensed&quot;, color=&quot;#ffffffde&quot;))</code></pre>
+<p><img src="/post/2018-12-21-bubble-packed-chart-with-r-using-packcircles-package_files/figure-html/experiment_with_rgba-1.png" width="1536" /></p>
+</div>
+<div id="drawing-smaller-circles-inside-of-circles" class="section level1">
+<h1>Drawing Smaller Circles Inside of Circles</h1>
+<pre class="r"><code>## Instead of using uniform distribution, used beta distribution this time! 
+pack_layout2 &lt;- circleProgressiveLayout(rbeta(1000,1,1), sizetype=&#39;area&#39;)
+
+## This time I want to fill circle using hue value...
+pack_layout2  &lt;- pack_layout2 %&gt;% 
+  mutate(r = sqrt(x^2 + y^2), ## calculate distance from 0,0 coordinate 
+         angle_t = atan2(y,x),  ## The arc-tangent of two arguments atan2(y, x) returns the angle between the x-axis and the vector from the origin to (x, y)
+         angle = rescale(angle_t, from=c(-pi,pi)), ## convert theta value to value betwwen 0 and 1
+         hex = hsv(h=angle, s=rescale(r), v=0.8),
+         id = row_number())
+
+## use circleLayoutVertices function to generate data frame for ggplot2 &amp; bring colour info.
+data_gg2 &lt;- circleLayoutVertices(pack_layout2,npoints=25) %&gt;%
+  inner_join(pack_layout2 %&gt;% select(-x,-y), by=c(&quot;id&quot;)) 
+
+## Now create data for inner circles!! But I&#39;m sampling so that NOT all circle has inner circles! I want to pick more bigger circles than smaller circle, so using raidus as weight to sample. 
+data_gg2_1 &lt;- circleLayoutVertices(pack_layout2 %&gt;% 
+                                     sample_n(800, weight=radius) %&gt;%
+                                     mutate(radius=0.7*radius), npoints=25) ## I want to draw smaller circle, so shrink the radius
+data_gg2_2 &lt;- circleLayoutVertices(pack_layout2 %&gt;% 
+                                     sample_n(700,weight=radius) %&gt;%
+                                     mutate(radius=0.5*radius),npoints=25) 
+data_gg2_3 &lt;- circleLayoutVertices(pack_layout2 %&gt;% 
+                                     sample_n(900,weight=radius) %&gt;%
+                                     mutate(radius=0.3*radius),npoints=25)
+
+## Draw Black and White Version  
+bw &lt;-data_gg2 %&gt;% 
+  ggplot(aes(x=x,y=y, group=id)) + 
+  geom_path(data=data_gg2, size=0.5, color=&quot;#00000090&quot;) +
+  geom_path(data=data_gg2_1,size=1, color=&quot;#00000090&quot;) +
+  geom_path(data=data_gg2_2,size=0.5, color=&quot;#00000090&quot;) +
+  geom_path(data=data_gg2_3,size=0.5, color=&quot;#00000090&quot;) +
+  scale_fill_identity() +
+  scale_color_identity() +
+  theme_void() +
+  coord_fixed()
+
+## Draw colourful version 
+hue &lt;-data_gg2 %&gt;% 
+  ggplot(aes(x=x,y=y, group=id)) + 
+  geom_polygon(aes(fill=hex)) +  
+  geom_path(data=data_gg2, size=0.5, color=&quot;#ffffff90&quot;) +
+  geom_path(data=data_gg2_1,size=1, color=&quot;#ffffff90&quot;) +
+  geom_path(data=data_gg2_2,size=0.5, color=&quot;#ffffff90&quot;) +
+  geom_path(data=data_gg2_3,size=0.5, color=&quot;#ffffff90&quot;) +
+  scale_fill_identity() +
+  scale_color_identity() +
+  theme_void() +
+  coord_fixed()
+
+library(patchwork)
+bw + hue</code></pre>
+<p><img src="/post/2018-12-21-bubble-packed-chart-with-r-using-packcircles-package_files/figure-html/design_with_inner_circle-1.png" width="1536" /></p>
+</div>
