@@ -224,3 +224,25 @@ flower_vertices(0,0,1,7) %&gt;%
        subtitle=&quot;r = cos(k * theta) &quot;) </code></pre>
 <p><img src="/post/2019-01-06-making-original-bingo-card-heart-theme_files/figure-html/grid_of_flowers-1.png" width="1152" /></p>
 </div>
+<div id="flower-needs-butterfly-too.." class="section level2">
+<h2>Flower Needs Butterfly Too..</h2>
+<p>There’s also another called “<a href="http://mathworld.wolfram.com/ButterflyCurve.html">butterfly curve</a>”.</p>
+<p>I think flower deserves butterfly… So here’s butterfly curve drawn in similar manner as the above.</p>
+<pre class="r"><code>butterfly_vertices &lt;- function(xc,yc,npoints=1000,...){
+  t = seq(0,12*pi, length.out=npoints+1)
+  x = xc + sin(t)*(exp(cos(t))-2*cos(4*t)-sin(t/12)^5)
+  y = yc + cos(t)*(exp(cos(t))-2*cos(4*t)-sin(t/12)^5)
+  df &lt;- tibble(x=x,y=y,t=t) %&gt;% mutate(pos=row_number())
+  return(df)
+}
+
+ggplot() +
+  geom_path(data=butterfly_vertices(1,1),aes(x=x,y=y, color=pos)) +
+  geom_polygon(data=butterfly_vertices(8,1), 
+               aes(x=x,y=y,fill=factor(floor(t/pi))), color=&quot;#000000de&quot;) +
+  coord_fixed() +
+  theme_void() +
+  scale_fill_viridis_d(alpha=0.3, guide=&quot;none&quot;) +
+  scale_color_viridis_c(option=&quot;magma&quot;, guide=&quot;none&quot;)</code></pre>
+<p><img src="/post/2019-01-06-making-original-bingo-card-heart-theme_files/figure-html/butterfly-1.png" width="1152" /></p>
+</div>

@@ -260,3 +260,32 @@ tibble(
 
 ```
 
+## Flower Needs Butterfly Too..
+
+There's also another called "[butterfly curve](http://mathworld.wolfram.com/ButterflyCurve.html)".  
+
+I think flower deserves butterfly...  So here's butterfly curve drawn in similar manner as the above. 
+
+```{r butterfly, echo=TRUE, fig.height=7, fig.width=12, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+
+butterfly_vertices <- function(xc,yc,npoints=1000,...){
+  t = seq(0,12*pi, length.out=npoints+1)
+  x = xc + sin(t)*(exp(cos(t))-2*cos(4*t)-sin(t/12)^5)
+  y = yc + cos(t)*(exp(cos(t))-2*cos(4*t)-sin(t/12)^5)
+  df <- tibble(x=x,y=y,t=t) %>% mutate(pos=row_number())
+  return(df)
+}
+
+ggplot() +
+  geom_path(data=butterfly_vertices(1,1),aes(x=x,y=y, color=pos)) +
+  geom_polygon(data=butterfly_vertices(8,1), 
+               aes(x=x,y=y,fill=factor(floor(t/pi))), color="#000000de") +
+  coord_fixed() +
+  theme_void() +
+  scale_fill_viridis_d(alpha=0.3, guide="none") +
+  scale_color_viridis_c(option="magma", guide="none")
+
+
+```
+
