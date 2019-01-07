@@ -1,0 +1,226 @@
+---
+title: Making Original Bingo - Heart Theme
+author: Chisato
+date: '2019-01-06'
+slug: making-original-bingo-card-heart-theme
+categories:
+  - R
+tags:
+  - tidyverse
+  - rvest
+  - patchwork
+description: ''
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+
+
+<p>I have learned how to draw <a href="http://mathworld.wolfram.com/HeartCurve.html">a heart with mathmatical equation</a>, in fact there are so many “curves” you can draw with equation. Amazing, right?!? You can find all sorts of different curves on <a href="http://mathworld.wolfram.com/topics/PolarCurves.html">Wolfram Mathworld site</a>. I’m really curious how did people find equation itself for <a href="https://www.wolframalpha.com/input/?i=Obama+curve">some of shapes</a>?</p>
+<p>Also at last family reunion, I’ve played “<a href="https://en.wikipedia.org/wiki/Bingo_(U.S.)">Bingo</a>”, which I haven’t played for ages! It’s a great game when you have wide range of age groups, because kids were having tons of fun, but so were adults and grand parents!</p>
+<p>So I’ve decided to create little twist on bingo…! Instead of just drawing numbers between 1-75, you can play bingo with words, pictures, since I just really wanted to use my new “heart shape drawing shape…” I decided I’ll make up bingo with some words related to “Valentine’s day”.</p>
+<div id="drawing-heart-shape-with-ggplot2" class="section level2">
+<h2>Drawing Heart Shape with ggplot2</h2>
+<p>You can look at past entry on how to draw <a href="https://chichacha.netlify.com/2018/10/17/cannibus-curve-with-ggplot2/">cannabis</a> here. Same concept.</p>
+<p>There were 6 different heart shape example on Wolfram site, but I liked 6th heart the best for shape. You can look at equation <a href="http://mathworld.wolfram.com/HeartCurve.html">here</a></p>
+<pre class="r"><code>library(tidyverse)
+library(patchwork)
+
+##  Function to generate heart shape around point xc and rc with some sizing.  Output of function is data frame with bunch of points which you can use to draw a heart!
+# http://mathworld.wolfram.com/HeartCurve.html
+heart_vertices &lt;- function(xc,yc,size,npoints=100,...){
+  #area = pi*r*r for circle... this heart has area of 180 = r*r
+  radius = size*0.05  ## I&#39;m not set on this...  I just wanted to make size smaller 
+  yc = yc + 0.1*radius  ## Just adjusting center of heart bit
+  t = seq(-pi,pi, length.out=npoints+1)
+  x = xc + 16 * radius *(sin(t))^3
+  y = yc + radius*13*cos(t) - radius*5*cos(2*t) - radius*2*cos(3*t) - radius*cos(4*t)
+  df &lt;- tibble(theta=t,x=x,y=y) 
+  return(df)
+}
+
+## Above function with generate points you&#39;d need to generate heart. If you adjust npoints to be higher, then you can draw smoother shape.
+
+heart_vertices(0,0,1) %&gt;%
+  ggplot() +
+  geom_line(aes(x=theta, y=x), color=&quot;#D22042de&quot;) +  
+  geom_line(aes(x=theta, y= -x),color=&quot;#D22042de&quot;,linetype=3) +  ## this is just to make a design
+  geom_line(aes(x=theta, y=y), color=&quot;#30C4C9de&quot;) +
+  geom_line(aes(x=theta, y= -y), color=&quot;#30C4C9de&quot;, linetype=3) + ## this is just to make a design
+  geom_polygon(aes(x=x,y=y), fill=&quot;#615375de&quot;, ## to draw heart use x=x,y=y
+               color=&quot;#61537520&quot;,size=10) + ## I&#39;m just playing around with line around filled part. 
+  theme_minimal(base_family=&quot;Roboto Condensed&quot;) +
+  scale_x_continuous(breaks=c(-pi,-pi/2,0,pi/2,pi), labels=c(&quot;-pi&quot;,&quot;&quot;,&quot;0&quot;,&quot;&quot;,&quot;pi&quot;)) +
+  coord_fixed() +
+  labs(x=&quot;&quot;,y=&quot;&quot;, caption=&quot;pink solid line = x value &amp; blue solid line = y value&quot;)</code></pre>
+<p><img src="/post/2019-01-06-making-original-bingo-card-heart-theme_files/figure-html/dataframe_generator-1.png" width="1056" /></p>
+</div>
+<div id="drawing-bunch-of-hearts-on-grid" class="section level2">
+<h2>Drawing Bunch of Hearts on Grid</h2>
+<p>Now I know how to draw a single heart, I want to be able to plot bunch of hearts on a grid. Since function heart_vertices creates data frame for a single heart around point xc and yc, I can create a grid with coordinates xc and yc.</p>
+<pre class="r"><code>my_grid &lt;- tibble(
+  xc=rep(c(1:15), times=5), 
+  yc=rep(c(1:5), each=15),
+  size=0.6, 
+  id = c(1:75)
+) 
+
+my_grid %&gt;% ggplot(aes(x=xc,y=yc)) +
+  geom_point(shape=21, size=10) +
+  geom_text(aes(label=id), family=&quot;Roboto Condensed&quot;, fontface=&quot;bold&quot;) +
+  theme_minimal() +
+  coord_fixed()</code></pre>
+<p><img src="/post/2019-01-06-making-original-bingo-card-heart-theme_files/figure-html/making_grid-1.png" width="1056" /></p>
+<pre class="r"><code>## For each points on grid generate points to draw heart 
+print_out_base &lt;-my_grid %&gt;% 
+  mutate(v=pmap(.,heart_vertices)) %&gt;%
+  unnest(v) %&gt;% 
+  ggplot(aes(x=x,y=y,group=id)) +
+  geom_polygon(aes(fill=factor(yc))) +
+  coord_fixed() +
+  theme_minimal(base_family=&quot;Roboto Condensed&quot;) +
+  scale_x_continuous(breaks=seq(0.5,16.5, by=1), labels=NULL) +
+  scale_y_continuous(breaks=seq(0.5,5.5,by=1), labels=NULL) +
+  scale_fill_manual(values=c(&quot;#30bcad&quot;,&quot;#57a337&quot;,&quot;#f8b620&quot;,&quot;#e03426&quot;,&quot;#eb73b3&quot;), guide=&quot;none&quot;)
+
+print_out_base</code></pre>
+<p><img src="/post/2019-01-06-making-original-bingo-card-heart-theme_files/figure-html/making_grid-2.png" width="1056" /></p>
+</div>
+<div id="putting-words-on-top-of-hearts" class="section level2">
+<h2>Putting Words On Top of Hearts</h2>
+<p>Now I have the hearts placed on grid, I want some words on top. So I took inspiration from candies with sayings that I often see during Valentine’s day week, which I didn’t know the name of candy, but I think it’s called <a href="https://en.wikipedia.org/wiki/Necco">Necco Sweetheart</a>.</p>
+<pre class="r"><code>## Needs at least 75 words.... since there are 75 heart with some word placed on it.
+## Some are not from those candies, I just made some up.  
+love_msgs &lt;- tibble(
+  msgs = c(&quot;143&quot;, &quot;#1 FAN&quot;, &quot;#LOVE&quot;, &quot;1-800\nCUPID&quot;, &quot;HUG ME&quot;, 
+            &quot;KISSES&quot;, &quot;BE MINE&quot;, &quot;CRAZY\n4 U&quot;, 
+            &quot;HOLD\nHANDS&quot;, &quot;UR\nLOVED&quot;, &quot;PURR FECT&quot;, &quot;WOO&quot;,
+            &quot;QT PIE&quot;, &quot;RECIPE\n4 LOVE&quot;, &quot;RISING STAR&quot;, &quot;TABLE\nFOR 2&quot;, 
+            &quot;TOO SWEET&quot;, &quot;TWEET&quot;, &quot;TWO HEARTS&quot;, &quot;TXT ME&quot;, &quot;UR HOT&quot;, 
+            &quot;WHATS UP&quot;, &quot;DESTINY&quot;, &quot;WICKED COOL&quot;, &quot;WINK\nWINK&quot;, 
+            &quot;STUNNING&quot;, &quot;XOXO&quot;, &quot;YOU&amp;ME&quot;, &quot;YUM\nYUM&quot;,&quot;SOUL\nMATE&quot;,&quot;BABE&quot;,
+            &quot;SAY YES&quot;,&quot;HELLO&quot;,&quot;DREAM\nBIG&quot;,&quot;BFF&quot;,&quot;HIGH\nFIVE&quot;,&quot;AWESOME&quot;,
+            &quot;SMILE&quot;,&quot;UR\nGR8&quot;,&quot;PHONE\nME&quot;,&quot;LOVE\nBIRD&quot;,&quot;BE TRUE&quot;,&quot;SURE LOVE&quot;,
+            &quot;MY BABY&quot;,&quot;HI GORGEOUS&quot;,&quot;HOT\nSTUFF&quot;,&quot;ADORE\nME&quot;,&quot;FUN&quot;,&quot;LOL&quot;,&quot;CALL ME&quot;,
+            &quot;PICK ME&quot;,&quot;DEAR\nONE&quot;,&quot;EVER\nAFTER&quot;,&quot;LOVER&quot;,&quot;ALL\nMINE&quot;,&quot;ANGEL&quot;,
+            &quot;RU SHY&quot;,&quot;SWEET PEA&quot;,&quot;LOVE\nBUG&quot;,&quot;ADORABLE&quot;,&quot;EMBRACE&quot;,&quot;FLOWERS&quot;,
+            &quot;CHERISH&quot;,&quot;CHOCOLATE&quot;,&quot;CUPCAKES&quot;,&quot;CRUSH&quot;,&quot;SECRET\nADMIRER&quot;,
+            &quot;VALENTINE&quot;,&quot;DOVES&quot;,&quot;LOVEBIRDS&quot;,&quot;DIAMONDS&quot;,&quot;PAARTY&quot;,&quot;HONEY&quot;,
+            &quot;PASSION&quot;,&quot;AWWW&quot;)
+)
+
+## Here you want to make sure you have at leat 75 words!    
+love_msgs &lt;- love_msgs %&gt;% 
+  arrange(msgs) %&gt;% ## sort them alphabetically.... It makes it easier to find word that were picked out.
+  mutate(idx=row_number()-1,
+         row_group=floor(idx/15)+1) 
+
+
+print_out_base +
+  geom_text(aes(x=xc,y=yc, 
+                label=love_msgs$msgs), 
+            color=&quot;#ffffffde&quot;,family=&quot;Roboto Condensed&quot;, size=3, fontface=&quot;bold&quot;,
+            lineheight=0.8,
+            data=. %&gt;% filter(theta==pi)) +
+  labs(title=&quot;Print &amp; Cut Them Into Pieces &amp; Draw Them Out of Hat or Box&quot;,x=&quot;&quot;,y=&quot;&quot;, 
+       caption=&quot;&quot;)</code></pre>
+<p><img src="/post/2019-01-06-making-original-bingo-card-heart-theme_files/figure-html/draw_cards-1.png" width="1152" /></p>
+</div>
+<div id="making-bingo-cards" class="section level2">
+<h2>Making Bingo Cards</h2>
+<p>Similariy, now I want to make 5 x 5 bingo cards that each person gets to participate in the game. I’ve generated 4 cards as example.</p>
+<pre class="r"><code>## Making Bingo Cards (Base Design)
+bingo_base &lt;-tibble(
+  xc = rep(c(1:5),times=5),
+  yc = rep(c(1:5),each=5),
+  size=0.6,
+  id = c(1:25)
+) %&gt;% mutate(v=pmap(., heart_vertices)) %&gt;%
+  unnest(v) %&gt;%
+  ggplot(aes(x=x,y=y,group=id)) +
+  geom_polygon(aes(fill=factor(xc))) +
+  geom_polygon(fill=&quot;#000000de&quot;, data=. %&gt;% filter(xc==3,yc==3))+
+  theme_minimal(base_family=&quot;Roboto Condensed&quot;) +
+  scale_x_continuous(breaks=c(1,2,3,4,5),labels=c(&quot;B&quot;,&quot;I&quot;,&quot;N&quot;,&quot;G&quot;,&quot;O&quot;), position=&quot;top&quot;) +
+  scale_y_continuous(labels=NULL) +
+  scale_fill_manual(values=c(&quot;#30bcad&quot;,&quot;#57a337&quot;,&quot;#f8b620&quot;,&quot;#e03426&quot;,&quot;#eb73b3&quot;), guide=&quot;none&quot;) +
+  labs(x=&quot;&quot;,y=&quot;&quot;) +
+  coord_fixed()
+
+## Just to make card little more fun, let&#39;s add some quotes about love on each cards.
+library(rvest)
+love_quotes &lt;- read_html(&quot;https://lifehacks.io/inspirational-love-quotes-sayings/&quot;) %&gt;%
+  html_nodes(&quot;h2&quot;) %&gt;% html_text()
+love_quotes &lt;- love_quotes[2:64]
+
+## Creating function to create one bingo card with randomly selected words on each rows.
+make_card  &lt;- function(name=&quot;&quot;) {
+  love_msgs_list &lt;- love_msgs %&gt;% split(.$row_group)
+  
+  unique_card &lt;- tibble(
+    xc = rep(c(1:5),each=5),
+    yc = rep(c(1:5),times=5),
+    ## from each lists i want to select 5 randomly.
+    msg = love_msgs_list %&gt;% map(.,&quot;msgs&quot;) %&gt;% map(.,sample,5) %&gt;% unlist()
+  )
+  unique_card &lt;- unique_card %&gt;% mutate(msg=ifelse(xc==3&amp;yc==3,&quot;FREE&quot;,msg))
+  
+  bingo_card &lt;- bingo_base +
+    geom_text(data=unique_card, aes(x=xc,y=yc,label=msg, group=NULL),
+              family=&quot;Roboto Condensed&quot;, fontface=&quot;bold&quot;, color=&quot;white&quot;, size=3) +
+    labs(title=str_c(name),caption=sample(love_quotes,size=1)) 
+  
+  bingo_card
+  
+}
+
+## using patchwork, I want to print 4 cards
+make_card(&quot;BINGO CARD 1&quot;) + make_card(&quot;BINGO CARD 2&quot;) + make_card(&quot;BINGO CARD 3&quot;) +
+  make_card(&quot;BINGO CARD 4&quot;) + patchwork::plot_layout(ncol=2)</code></pre>
+<p><img src="/post/2019-01-06-making-original-bingo-card-heart-theme_files/figure-html/bingo_playing_cards-1.png" width="1152" /></p>
+</div>
+<div id="bonus-drawing-flowers-to-go-with-hearts" class="section level2">
+<h2>Bonus : Drawing Flowers To Go With Hearts</h2>
+<p>Just thought it would also be nice to draw flowers too. After all, flowers go with hearts :). You can read more about rose <a href="http://mathworld.wolfram.com/Rose.html">curve here</a> or <a href="https://en.wikipedia.org/wiki/Rose_(mathematics)">here</a></p>
+<pre class="r"><code>flower_vertices &lt;- function(xc,yc,radius,k=5,npoints=300,...){
+  t = seq(0,2*pi, length.out=npoints+1) 
+  m = sqrt(radius) * cos(k * t)
+  x = xc + m * cos(t)
+  y = yc + m * sin(t)
+  df &lt;- tibble(t=t,x=x,y=y,r=m)
+  return(df)
+}
+
+flower_vertices(0,0,1,7) %&gt;% 
+  ggplot(aes(x=t)) +
+  geom_line(aes(y=x), color=&quot;red&quot;, linetype=3) +
+  geom_line(aes(y=y), color=&quot;blue&quot;,linetype=3) +
+  geom_polygon(aes(x=x,y=y), alpha=0.5) +
+  theme_minimal(base_family=&quot;Roboto Condensed&quot;) +
+  coord_fixed() +
+  labs(title=&quot;Rose Curve with K=7 - Flower with 7 Petals&quot;)</code></pre>
+<p><img src="/post/2019-01-06-making-original-bingo-card-heart-theme_files/figure-html/flower_drawing-1.png" width="1152" /></p>
+<pre class="r"><code>tibble(
+  xc=rep(c(1:5),time=5),
+  yc=rep(c(1:5),each=5),
+  radius=0.1,
+  k = c(1:25),
+  id=c(1:25)
+) %&gt;% mutate(v=pmap(.,flower_vertices)) %&gt;%
+  unnest(v) %&gt;%
+  ggplot(aes(x=x,y=y,group=id)) +
+  geom_polygon(aes(fill=id%%2)) +
+  geom_point(aes(x=xc,y=yc), data=. %&gt;% count(id,xc,yc), size=3,shape=19, alpha=0.7) +
+  geom_text(aes(x=x,y=y, label=k), family=&quot;Roboto Condensed&quot;,
+            size=8, vjust=1, fontface=&quot;bold&quot;, color=&quot;#000000ae&quot;,
+            data=. %&gt;% group_by(id) %&gt;% filter(max(t)==t)) +
+  theme_void(base_family=&quot;Roboto Condensed&quot;) +
+  coord_fixed() +
+  scale_y_reverse() +
+  scale_fill_viridis_c(begin=0.2,end=0.7,option=&quot;magma&quot;, guide=&quot;none&quot;, alpha=0.8) +
+  labs(title=&quot;Rose Curves with differnt k &quot;,
+       subtitle=&quot;r = cos(k * theta) &quot;) </code></pre>
+<p><img src="/post/2019-01-06-making-original-bingo-card-heart-theme_files/figure-html/grid_of_flowers-1.png" width="1152" /></p>
+</div>

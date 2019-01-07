@@ -1,0 +1,262 @@
+---
+title: Making Original Bingo - Heart Theme
+author: Chisato
+date: '2019-01-06'
+slug: making-original-bingo-card-heart-theme
+categories:
+  - R
+tags:
+  - tidyverse
+  - rvest
+  - patchwork
+description: ''
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+I have learned how to draw [a heart with mathmatical equation](http://mathworld.wolfram.com/HeartCurve.html), in fact there are so many "curves" you can draw with equation. Amazing, right?!?  You can find all sorts of different curves on [Wolfram Mathworld site](http://mathworld.wolfram.com/topics/PolarCurves.html). I'm really curious how did people find equation itself for [some of shapes](https://www.wolframalpha.com/input/?i=Obama+curve)? 
+
+Also at last family reunion, I've played "[Bingo](https://en.wikipedia.org/wiki/Bingo_(U.S.))", which I haven't played for ages!  It's a great game when you have wide range of age groups, because kids were having tons of fun, but so were adults and grand parents! 
+
+
+So I've decided to create little twist on bingo...! 
+Instead of just drawing numbers between 1-75, you can play bingo with words, pictures, since I just really wanted to use my new "heart shape drawing shape..."  I decided I'll make up bingo with some words related to "Valentine's day".  
+
+
+## Drawing Heart Shape with ggplot2
+
+You can look at past entry on how to draw [cannabis](https://chichacha.netlify.com/2018/10/17/cannibus-curve-with-ggplot2/) here.  Same concept.  
+
+There were 6 different heart shape example on Wolfram site, but I liked 6th heart the best for shape. You can look at equation [here](http://mathworld.wolfram.com/HeartCurve.html)
+
+
+```{r dataframe_generator, echo=TRUE, fig.height=6, fig.width=11, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+library(tidyverse)
+library(patchwork)
+
+##  Function to generate heart shape around point xc and rc with some sizing.  Output of function is data frame with bunch of points which you can use to draw a heart!
+# http://mathworld.wolfram.com/HeartCurve.html
+heart_vertices <- function(xc,yc,size,npoints=100,...){
+  #area = pi*r*r for circle... this heart has area of 180 = r*r
+  radius = size*0.05  ## I'm not set on this...  I just wanted to make size smaller 
+  yc = yc + 0.1*radius  ## Just adjusting center of heart bit
+  t = seq(-pi,pi, length.out=npoints+1)
+  x = xc + 16 * radius *(sin(t))^3
+  y = yc + radius*13*cos(t) - radius*5*cos(2*t) - radius*2*cos(3*t) - radius*cos(4*t)
+  df <- tibble(theta=t,x=x,y=y) 
+  return(df)
+}
+
+## Above function with generate points you'd need to generate heart. If you adjust npoints to be higher, then you can draw smoother shape.
+
+heart_vertices(0,0,1) %>%
+  ggplot() +
+  geom_line(aes(x=theta, y=x), color="#D22042de") +  
+  geom_line(aes(x=theta, y= -x),color="#D22042de",linetype=3) +  ## this is just to make a design
+  geom_line(aes(x=theta, y=y), color="#30C4C9de") +
+  geom_line(aes(x=theta, y= -y), color="#30C4C9de", linetype=3) + ## this is just to make a design
+  geom_polygon(aes(x=x,y=y), fill="#615375de", ## to draw heart use x=x,y=y
+               color="#61537520",size=10) + ## I'm just playing around with line around filled part. 
+  theme_minimal(base_family="Roboto Condensed") +
+  scale_x_continuous(breaks=c(-pi,-pi/2,0,pi/2,pi), labels=c("-pi","","0","","pi")) +
+  coord_fixed() +
+  labs(x="",y="", caption="pink solid line = x value & blue solid line = y value")
+
+
+```
+
+
+## Drawing Bunch of Hearts on Grid
+
+Now I know how to draw a single heart, I want to be able to plot bunch of hearts on a grid.  Since function heart_vertices creates data frame for a single heart around point xc and yc, I can create a grid with coordinates xc and yc.
+
+```{r making_grid, echo=TRUE, fig.height=5, fig.width=11, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+my_grid <- tibble(
+  xc=rep(c(1:15), times=5), 
+  yc=rep(c(1:5), each=15),
+  size=0.6, 
+  id = c(1:75)
+) 
+
+my_grid %>% ggplot(aes(x=xc,y=yc)) +
+  geom_point(shape=21, size=10) +
+  geom_text(aes(label=id), family="Roboto Condensed", fontface="bold") +
+  theme_minimal() +
+  coord_fixed()
+
+## For each points on grid generate points to draw heart 
+print_out_base <-my_grid %>% 
+  mutate(v=pmap(.,heart_vertices)) %>%
+  unnest(v) %>% 
+  ggplot(aes(x=x,y=y,group=id)) +
+  geom_polygon(aes(fill=factor(yc))) +
+  coord_fixed() +
+  theme_minimal(base_family="Roboto Condensed") +
+  scale_x_continuous(breaks=seq(0.5,16.5, by=1), labels=NULL) +
+  scale_y_continuous(breaks=seq(0.5,5.5,by=1), labels=NULL) +
+  scale_fill_manual(values=c("#30bcad","#57a337","#f8b620","#e03426","#eb73b3"), guide="none")
+
+print_out_base
+
+```
+
+## Putting Words On Top of Hearts
+
+Now I have the hearts placed on grid, I want some words on top. So I took inspiration from candies with sayings that I often see during Valentine's day week, which I didn't know the name of candy, but I think it's called  [Necco Sweetheart](https://en.wikipedia.org/wiki/Necco). 
+
+
+```{r draw_cards, echo=TRUE, fig.height=7, fig.width=12, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+## Needs at least 75 words.... since there are 75 heart with some word placed on it.
+## Some are not from those candies, I just made some up.  
+love_msgs <- tibble(
+  msgs = c("143", "#1 FAN", "#LOVE", "1-800\nCUPID", "HUG ME", 
+            "KISSES", "BE MINE", "CRAZY\n4 U", 
+            "HOLD\nHANDS", "UR\nLOVED", "PURR FECT", "WOO",
+            "QT PIE", "RECIPE\n4 LOVE", "RISING STAR", "TABLE\nFOR 2", 
+            "TOO SWEET", "TWEET", "TWO HEARTS", "TXT ME", "UR HOT", 
+            "WHATS UP", "DESTINY", "WICKED COOL", "WINK\nWINK", 
+            "STUNNING", "XOXO", "YOU&ME", "YUM\nYUM","SOUL\nMATE","BABE",
+            "SAY YES","HELLO","DREAM\nBIG","BFF","HIGH\nFIVE","AWESOME",
+            "SMILE","UR\nGR8","PHONE\nME","LOVE\nBIRD","BE TRUE","SURE LOVE",
+            "MY BABY","HI GORGEOUS","HOT\nSTUFF","ADORE\nME","FUN","LOL","CALL ME",
+            "PICK ME","DEAR\nONE","EVER\nAFTER","LOVER","ALL\nMINE","ANGEL",
+            "RU SHY","SWEET PEA","LOVE\nBUG","ADORABLE","EMBRACE","FLOWERS",
+            "CHERISH","CHOCOLATE","CUPCAKES","CRUSH","SECRET\nADMIRER",
+            "VALENTINE","DOVES","LOVEBIRDS","DIAMONDS","PAARTY","HONEY",
+            "PASSION","AWWW")
+)
+
+## Here you want to make sure you have at leat 75 words!    
+love_msgs <- love_msgs %>% 
+  arrange(msgs) %>% ## sort them alphabetically.... It makes it easier to find word that were picked out.
+  mutate(idx=row_number()-1,
+         row_group=floor(idx/15)+1) 
+
+
+print_out_base +
+  geom_text(aes(x=xc,y=yc, 
+                label=love_msgs$msgs), 
+            color="#ffffffde",family="Roboto Condensed", size=3, fontface="bold",
+            lineheight=0.8,
+            data=. %>% filter(theta==pi)) +
+  labs(title="Print & Cut Them Into Pieces & Draw Them Out of Hat or Box",x="",y="", 
+       caption="")
+
+```
+
+## Making Bingo Cards 
+
+Similariy, now I want to make 5 x 5 bingo cards that each person gets to participate in the game. I've generated 4 cards as example. 
+
+```{r bingo_playing_cards, echo=TRUE, fig.height=12, fig.width=12, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+## Making Bingo Cards (Base Design)
+bingo_base <-tibble(
+  xc = rep(c(1:5),times=5),
+  yc = rep(c(1:5),each=5),
+  size=0.6,
+  id = c(1:25)
+) %>% mutate(v=pmap(., heart_vertices)) %>%
+  unnest(v) %>%
+  ggplot(aes(x=x,y=y,group=id)) +
+  geom_polygon(aes(fill=factor(xc))) +
+  geom_polygon(fill="#000000de", data=. %>% filter(xc==3,yc==3))+
+  theme_minimal(base_family="Roboto Condensed") +
+  scale_x_continuous(breaks=c(1,2,3,4,5),labels=c("B","I","N","G","O"), position="top") +
+  scale_y_continuous(labels=NULL) +
+  scale_fill_manual(values=c("#30bcad","#57a337","#f8b620","#e03426","#eb73b3"), guide="none") +
+  labs(x="",y="") +
+  coord_fixed()
+
+## Just to make card little more fun, let's add some quotes about love on each cards.
+library(rvest)
+love_quotes <- read_html("https://lifehacks.io/inspirational-love-quotes-sayings/") %>%
+  html_nodes("h2") %>% html_text()
+love_quotes <- love_quotes[2:64]
+
+## Creating function to create one bingo card with randomly selected words on each rows.
+make_card  <- function(name="") {
+  love_msgs_list <- love_msgs %>% split(.$row_group)
+  
+  unique_card <- tibble(
+    xc = rep(c(1:5),each=5),
+    yc = rep(c(1:5),times=5),
+    ## from each lists i want to select 5 randomly.
+    msg = love_msgs_list %>% map(.,"msgs") %>% map(.,sample,5) %>% unlist()
+  )
+  unique_card <- unique_card %>% mutate(msg=ifelse(xc==3&yc==3,"FREE",msg))
+  
+  bingo_card <- bingo_base +
+    geom_text(data=unique_card, aes(x=xc,y=yc,label=msg, group=NULL),
+              family="Roboto Condensed", fontface="bold", color="white", size=3) +
+    labs(title=str_c(name),caption=sample(love_quotes,size=1)) 
+  
+  bingo_card
+  
+}
+
+## using patchwork, I want to print 4 cards
+make_card("BINGO CARD 1") + make_card("BINGO CARD 2") + make_card("BINGO CARD 3") +
+  make_card("BINGO CARD 4") + patchwork::plot_layout(ncol=2)
+
+
+```
+
+## Bonus : Drawing Flowers To Go With Hearts 
+
+Just thought it would also be nice to draw flowers too.  After all, flowers go with hearts :). You can read more about rose [curve here](http://mathworld.wolfram.com/Rose.html) or [here](https://en.wikipedia.org/wiki/Rose_(mathematics))
+
+```{r flower_drawing, echo=TRUE, fig.height=5, fig.width=12, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+flower_vertices <- function(xc,yc,radius,k=5,npoints=300,...){
+  t = seq(0,2*pi, length.out=npoints+1) 
+  m = sqrt(radius) * cos(k * t)
+  x = xc + m * cos(t)
+  y = yc + m * sin(t)
+  df <- tibble(t=t,x=x,y=y,r=m)
+  return(df)
+}
+
+flower_vertices(0,0,1,7) %>% 
+  ggplot(aes(x=t)) +
+  geom_line(aes(y=x), color="red", linetype=3) +
+  geom_line(aes(y=y), color="blue",linetype=3) +
+  geom_polygon(aes(x=x,y=y), alpha=0.5) +
+  theme_minimal(base_family="Roboto Condensed") +
+  coord_fixed() +
+  labs(title="Rose Curve with K=7 - Flower with 7 Petals")
+
+
+```
+
+```{r grid_of_flowers, echo=TRUE, fig.height=12, fig.width=12, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+tibble(
+  xc=rep(c(1:5),time=5),
+  yc=rep(c(1:5),each=5),
+  radius=0.1,
+  k = c(1:25),
+  id=c(1:25)
+) %>% mutate(v=pmap(.,flower_vertices)) %>%
+  unnest(v) %>%
+  ggplot(aes(x=x,y=y,group=id)) +
+  geom_polygon(aes(fill=id%%2)) +
+  geom_point(aes(x=xc,y=yc), data=. %>% count(id,xc,yc), size=3,shape=19, alpha=0.7) +
+  geom_text(aes(x=x,y=y, label=k), family="Roboto Condensed",
+            size=8, vjust=1, fontface="bold", color="#000000ae",
+            data=. %>% group_by(id) %>% filter(max(t)==t)) +
+  theme_void(base_family="Roboto Condensed") +
+  coord_fixed() +
+  scale_y_reverse() +
+  scale_fill_viridis_c(begin=0.2,end=0.7,option="magma", guide="none", alpha=0.8) +
+  labs(title="Rose Curves with differnt k ",
+       subtitle="r = cos(k * theta) ") 
+
+
+```
+
