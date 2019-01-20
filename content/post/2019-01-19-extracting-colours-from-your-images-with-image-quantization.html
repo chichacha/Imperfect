@@ -1,0 +1,191 @@
+---
+title: Extracting colours from your images with Image Quantization
+author: Chi
+date: '2019-01-19'
+slug: extracting-colours-from-your-images-with-image-quantization
+categories:
+  - R
+tags:
+  - tidyverse
+  - magick
+  - imager
+  - scales
+description: ''
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+
+
+<div id="magick-really-does-the-magic" class="section level2">
+<h2>magick really does the “Magic!”</h2>
+<p>I have been playing around bit with package “<a href="https://cran.r-project.org/web/packages/magick/">magick</a>”, and I think I am now hooked… Although I haven’t been able to understand everything written in <a href="https://cran.r-project.org/web/packages/magick/vignettes/intro.html">vignette</a> just yet.</p>
+<p>One of function I got really excited is <a href="https://rdrr.io/cran/magick/man/color.html">image_quantize</a>. This function will reduce the number of unique colours used in the image. i.e. I thought this is <a href="https://chichacha.netlify.com/2018/11/12/utilizing-k-means-to-extract-colours-from-your-favourite-images/">yet another</a> way you can extract colours from an image!</p>
+</div>
+<div id="image-quantization-in-action" class="section level2">
+<h2>Image Quantization in action</h2>
+<pre class="r"><code>## Load up packages I&#39;m going to use first.
+
+library(tidyverse) ## I love ggplot and tidy data.... so this is a must for anything. 
+library(magick) ## Hello magick!!! 
+library(scales) ## I find rescale function so useful!  and i love show_col function :)
+library(imager) ## i don&#39;t know how else to convert image to data frame at the moment. 
+
+
+## I&#39;ll use this plum flower image I took while back to extract colour. 
+## using image_read function in magick I can read image as below. 
+im &lt;- image_read(&quot;https://farm4.staticflickr.com/3579/3370591414_f321bd33ff_z.jpg&quot;)
+
+## now display image with 500px wide
+im %&gt;% image_resize(&quot;500&quot;)</code></pre>
+<p><img src="/post/2019-01-19-extracting-colours-from-your-images-with-image-quantization_files/figure-html/image_quantize-1.png" width="250" /></p>
+<pre class="r"><code>## Reduce the colour used in image with image_quantize.  For example, let&#39;s say I want to reduce to 24 colours.
+im %&gt;%
+  image_resize(&quot;500&quot;) %&gt;%
+  image_quantize(max=24)</code></pre>
+<p><img src="/post/2019-01-19-extracting-colours-from-your-images-with-image-quantization_files/figure-html/image_quantize-2.png" width="250" /></p>
+</div>
+<div id="extracting-colours-from-quantized-images" class="section level2">
+<h2>Extracting “Colours” from Quantized Images</h2>
+<p>I wanted to ulitimately get hex values I can use with ggplot2 to plot, but I got really intrigued with option I can use in image_quantize function. You can specify different colourspace! You can see different colourspaces you can specify by typing in colorspace_types(). There are 37 different colourspaces… I’ve googled bunch… I’ve heard of “HSV”,“RGB”,“Luv”,“CMYK”, but some I have not even heard of before…</p>
+<pre class="r"><code>## To view different colourspace you can specify in image_quantize function.
+colorspace_types()</code></pre>
+<pre><code>##  [1] &quot;Undefined&quot;   &quot;CIELab&quot;      &quot;CMY&quot;         &quot;CMYK&quot;        &quot;Gray&quot;       
+##  [6] &quot;HCL&quot;         &quot;HCLp&quot;        &quot;HSB&quot;         &quot;HSI&quot;         &quot;HSL&quot;        
+## [11] &quot;HSV&quot;         &quot;HWB&quot;         &quot;Lab&quot;         &quot;LCH&quot;         &quot;LCHab&quot;      
+## [16] &quot;LCHuv&quot;       &quot;LinearGray&quot;  &quot;LMS&quot;         &quot;Log&quot;         &quot;Luv&quot;        
+## [21] &quot;OHTA&quot;        &quot;Rec601Luma&quot;  &quot;Rec601YCbCr&quot; &quot;Rec709Luma&quot;  &quot;Rec709YCbCr&quot;
+## [26] &quot;RGB&quot;         &quot;scRGB&quot;       &quot;sRGB&quot;        &quot;Transparent&quot; &quot;XYZ&quot;        
+## [31] &quot;xyY&quot;         &quot;YCbCr&quot;       &quot;YDbDr&quot;       &quot;YCC&quot;         &quot;YIQ&quot;        
+## [36] &quot;YPbPr&quot;       &quot;YUV&quot;</code></pre>
+<pre class="r"><code>## Function to get n number of colours out of your image. (optionally you can specify different colour space)
+get_colorPal &lt;- function(im, n=8, cs=&quot;RGB&quot;){
+  #print(cs) 
+  tmp &lt;-im %&gt;% image_resize(&quot;100&quot;) %&gt;% 
+    image_quantize(max=n, colorspace=cs) %&gt;%  ## reducing colours! different colorspace gives you different result
+    magick2cimg() %&gt;%  ## I&#39;m converting, becauase I want to use as.data.frame function in imager package.
+    RGBtoHSV() %&gt;% ## i like sorting colour by hue rather than RGB (red green blue)
+    as.data.frame(wide=&quot;c&quot;) %&gt;%  #3 making it wide makes it easier to output hex colour
+    mutate(hex=hsv(rescale(c.1, from=c(0,360)),c.2,c.3),
+           hue = c.1,
+           sat = c.2,
+           value = c.3) %&gt;%
+    count(hex, hue, sat,value, sort=T) %&gt;% 
+    mutate(colorspace = cs)
+  
+  return(tmp %&gt;% select(colorspace,hex,hue,sat,value,n)) ## I want data frame as a result.
+  
+}
+
+## Here&#39;s example using plum flower image 
+get_colorPal(im)</code></pre>
+<pre><code>## # A tibble: 8 x 6
+##   colorspace hex       hue    sat value     n
+##   &lt;chr&gt;      &lt;chr&gt;   &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt;
+## 1 RGB        #4D555C  208  0.163  0.361  2501
+## 2 RGB        #3F8192  192. 0.568  0.573  1108
+## 3 RGB        #9F717D  344. 0.289  0.624   996
+## 4 RGB        #6C9BAA  195. 0.365  0.667   590
+## 5 RGB        #8DB4C2  196. 0.273  0.761   551
+## 6 RGB        #D36C8D  341. 0.488  0.827   434
+## 7 RGB        #A5C5D2  197. 0.214  0.824   285
+## 8 RGB        #CBCCD4  233. 0.0425 0.831   235</code></pre>
+<pre class="r"><code>## if you just want list of colour values...
+get_colorPal(im) %&gt;% pull(hex)</code></pre>
+<pre><code>## [1] &quot;#4D555C&quot; &quot;#3F8192&quot; &quot;#9F717D&quot; &quot;#6C9BAA&quot; &quot;#8DB4C2&quot; &quot;#D36C8D&quot; &quot;#A5C5D2&quot;
+## [8] &quot;#CBCCD4&quot;</code></pre>
+</div>
+<div id="different-colourspaces-and-reduced-colour-palettes" class="section level2">
+<h2>Different Colourspaces and Reduced Colour Palettes</h2>
+<p>Since using different colourspaces results in slightly different colour sets, I wanted to “map” function in <a href="https://purrr.tidyverse.org/">purrr package</a> in action. :)</p>
+<pre class="r"><code>params &lt;- list(im=list(im), 
+               n=12, ## number of colour you want 
+               cs=colorspace_types()[-5]) ## gray fails so I&#39;ve removed it...
+
+my_colors &lt;- pmap_df(params,get_colorPal)
+
+## Let&#39;s see what got spitted out as results for different colourspace specifiction in image_quantize function.
+
+## I want to view reduced colours by different colourspaces all at once! 
+my_colors %&gt;%  
+  group_by(colorspace) %&gt;%
+  mutate(ypos=row_number(value)) %&gt;%  ## I decided to stack colours by value. 
+  ggplot(aes(x=fct_infreq(colorspace),y=ypos, fill=hex)) +  
+  geom_tile() +
+  geom_text(aes(label=hex), color=&quot;#ffffffbe&quot;, 
+            size=4, family=&quot;Roboto Condensed&quot;) +
+  scale_fill_identity() +
+  scale_y_continuous(breaks=NULL) +
+  theme_void(base_family=&quot;Roboto Condensed&quot;) +
+  coord_flip(ylim=c(1,12)) +
+  theme(axis.text = element_text(color = &quot;black&quot;, family=&quot;Roboto Condensed&quot;, hjust=1)) +
+  labs(caption=&quot;Using different colourspce to reduce the colour used in images&quot;)</code></pre>
+<p><img src="/post/2019-01-19-extracting-colours-from-your-images-with-image-quantization_files/figure-html/ExperimentWithColourspace-1.png" width="1536" /></p>
+<p>I still don’t undertand why, but some colourspaces returns reduced number of colour palettes below specified max value… I wanted to figure out which colorspaces share same colour palettes, but I wasn’t sure how to go around calculating similarity of palettes…</p>
+<p>scRGB and RGB seems to return same results. Also Undefined, Transparent, sRGB seemed to resulted in exact same palettes. LCHab, and LCH in this case was same too. HCLp and <a href="https://en.wikipedia.org/wiki/HCL_color_space">HCL</a> are also the same in this case.</p>
+</div>
+<div id="experimenting-with-plot-for-fun" class="section level2">
+<h2>Experimenting with plot for fun…</h2>
+<p>Resulting colour palettes are similar but different… So I’ve decided to play around…</p>
+<pre class="r"><code>polar1 &lt;-my_colors %&gt;%  
+  group_by(colorspace) %&gt;%
+  mutate(ypos=row_number(hue)) %&gt;%  ## alter stacking order
+  ggplot(aes(x=colorspace, y=ypos, fill=hex)) +
+  geom_tile() +
+  scale_fill_identity() +
+  scale_y_continuous(breaks=NULL) +
+  theme_void() +
+  coord_polar() +
+  expand_limits(y=-1) 
+
+polar2 &lt;-my_colors %&gt;%  
+  group_by(colorspace) %&gt;%
+  mutate(ypos=row_number(hue)) %&gt;%  
+  ggplot(aes(x=colorspace, y=hue, fill=hex, 
+             height=sat*hue, width=value, alpha=value)) +
+  geom_tile() +
+  scale_fill_identity() +
+  scale_y_continuous(breaks=NULL) +
+  theme_void() +
+  coord_polar() +
+  expand_limits(y=0) +
+  scale_alpha_continuous(guide=&quot;none&quot;)
+
+polar3 &lt;-my_colors %&gt;%  
+  group_by(colorspace) %&gt;%
+  mutate(ypos=row_number(hue)) %&gt;%  ## alter stacking order
+  ggplot(aes(x=colorspace, y=ypos, fill=hex, height=sat*value)) +
+  geom_tile() +
+  scale_fill_identity() +
+  scale_y_continuous(breaks=NULL) +
+  theme_void() +
+  coord_polar() +
+  expand_limits(y=0) 
+
+
+## I think there&#39;s better way to write.... 
+fig_polar &lt;- image_graph(width=600, height=600) 
+polar1
+polar2
+polar3
+dev.off()</code></pre>
+<pre><code>## quartz_off_screen 
+##                 2</code></pre>
+<pre class="r"><code>image_append(fig_polar) ## by default it appends to the side. </code></pre>
+<p><img src="/post/2019-01-19-extracting-colours-from-your-images-with-image-quantization_files/figure-html/abstractArt-1.png" width="900" /></p>
+</div>
+<div id="different-images-differnt-colour-palettes" class="section level2">
+<h2>Different Images Differnt Colour Palettes…</h2>
+<p>Here are 2 other images I applied same to get colour palettes out of.</p>
+<p><img src="/post/2019-01-19-extracting-colours-from-your-images-with-image-quantization_files/figure-html/Extra-1.png" width="600" /></p>
+<pre><code>## quartz_off_screen 
+##                 2</code></pre>
+<pre><code>## # A tibble: 1 x 7
+##   format width height colorspace matte filesize density
+##   &lt;chr&gt;  &lt;int&gt;  &lt;int&gt; &lt;chr&gt;      &lt;lgl&gt;    &lt;int&gt; &lt;chr&gt;  
+## 1 PNG     1200    600 sRGB       TRUE         0 72x72</code></pre>
+<p><img src="/post/2019-01-19-extracting-colours-from-your-images-with-image-quantization_files/figure-html/Extra-2.png" width="600" /></p>
+<p><img src="/post/2019-01-19-extracting-colours-from-your-images-with-image-quantization_files/figure-html/Extra2-1.png" width="1152" /><img src="/post/2019-01-19-extracting-colours-from-your-images-with-image-quantization_files/figure-html/Extra2-2.png" width="1152" /></p>
+</div>
