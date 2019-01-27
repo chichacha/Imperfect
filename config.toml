@@ -167,7 +167,7 @@ post = "/:year/:month/:day/:slug/"
   deviantart       = ""
   flickr           = ""
   behance          = ""
-  dribbble         = ""
+  dribbble         = "chichacha"
   # Publishing Communities
   wordpress        = ""
   medium           = ""
