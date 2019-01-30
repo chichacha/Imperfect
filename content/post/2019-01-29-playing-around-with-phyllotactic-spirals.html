@@ -1,0 +1,168 @@
+---
+title: Playing Around with Phyllotactic Spirals
+author: Chisato
+date: '2019-01-29'
+slug: playing-around-with-phyllotactic-spirals
+categories:
+  - R
+tags:
+  - art
+  - tidyverse
+  - scales
+  - magick
+  - patchwork
+description: ''
+featured: ''
+featuredalt: ''
+featuredpath: ''
+linktitle: ''
+---
+
+
+
+<p>I wanted to figure out how to create gif animation using the <a href="https://CRAN.R-project.org/package=magick">magick</a>, so I decided I’ll try that out with ggplot2 spiral art.</p>
+<div id="loading-up-packages" class="section level2">
+<h2>Loading up packages</h2>
+<p>I’m definitely in love with “magick” right now :)</p>
+<pre class="r"><code>library(tidyverse) ## for pretty much everything...
+library(magick) ## I&#39;m now a magick fan!!! 
+library(scales) ## Handy when it comes to scaling, but I also love show_col function
+library(patchwork) ## put ggplot side by side easily :) 
+
+## Let&#39;s just set some of my favourite number.
+phi &lt;- (1 + sqrt(5)) / 2 
+golden_angle &lt;- pi*(3-sqrt(5))</code></pre>
+</div>
+<div id="function-to-draw-artwork" class="section level2">
+<h2>Function To Draw Artwork</h2>
+<p>Instead of creating data frame, then plot with different parameters, I’ve created function so that I can tweak some of parameters to create different art.</p>
+<ul>
+<li>n : changes number of points to use (number of rows in data frame to plot)</li>
+<li>u : I’m making art by drawing lines by connecting dots, but skipping “u” numbers of dots in between.</li>
+<li>v : Useful to set if you want to create rotating animation</li>
+<li>angle: using golden angle will produce nice phyllotactic spiral, but we can use different angle to produce different art</li>
+</ul>
+<pre class="r"><code>create_art &lt;- function(n=1800,u=5,v=0,angle=golden_angle,colors=&quot;#ffffff&quot;,...){
+  
+  my_colours &lt;- colors ## default is using one colour, white, but I can use vector of colours too. 
+  
+  ## Create data frame first using those parameters specified above
+  df &lt;- tibble(
+    idx = c(0:(n-1)), ## you can increase the number here to use more lines.
+    t = seq(0,2*pi,length.out=n),  ## since I used 0 to 1800 above, need to add 1
+    r = sqrt(idx), ## radius   
+    x = r*cos(angle*idx),
+    y = r*sin(angle*idx),
+    color_angle = atan2(y=y,x=x) ## get angle between x-axos and the vector from the origin to x,y
+  )
+  
+  ## In case you specified m2&gt;m then change 
+  v &lt;- ifelse(v&lt;u,v,v%%u)
+  max_r &lt;- max(df$r)*1.1
+  #print(max_r)
+  
+  my_art &lt;- df %&gt;% 
+    ggplot(aes(x=x,y=y,color=color_angle)) +
+    geom_path(data= . %&gt;% filter(idx%%u==v), ## only use partial data to connect the dots
+              lineend=&quot;round&quot;, linejoin=&quot;mitre&quot;, linemitre=3,
+              aes(size=idx, alpha=idx)) + 
+    coord_fixed() +
+    theme_void() +
+    scale_alpha_continuous(guide=&quot;none&quot;, range=c(0,1), trans=&quot;sqrt&quot;)+ 
+    scale_size_continuous(guide=&quot;none&quot;,  range=c(10,0), trans=&quot;sqrt&quot;) +
+    scale_color_gradientn(guide=&quot;none&quot;, 
+                          colors=my_colours) +
+    theme(panel.background = element_rect(fill=&quot;#000000de&quot;)) +
+    expand_limits(x=c(-max_r,max_r),y=c(-max_r,max_r)) 
+    
+  my_art + annotate(geom=&quot;text&quot;, x=Inf,y=-Inf,
+                    label=str_glue(&#39;n: {n} | u: {u} | v: {v} | angle: {round(angle,3)} radian&#39;),
+                    family=&quot;Roboto Condensed&quot;, color=&quot;#ffffffae&quot;,
+                    hjust=1,vjust=-1)
+}
+
+
+## Using all default value to plot! 
+create_art() +
+  ## using below just to make canvas wider to fit blog post nicer?
+  geom_blank(data=data.frame(), aes(x=c(-phi*50,phi*50),y=c(-50,50), color=c(0,0))) </code></pre>
+<p><img src="/post/2019-01-29-playing-around-with-phyllotactic-spirals_files/figure-html/Art_Function-1.png" width="1536" /></p>
+</div>
+<div id="variation-of-art-by-tweaking-some-parameters" class="section level2">
+<h2>Variation of Art by Tweaking Some Parameters</h2>
+<p>Arranging plot side by side is very easy with package <a href="https://github.com/thomasp85/patchwork">patchwork</a>!</p>
+<pre class="r"><code>## changing up the angle 
+create_art(n=360,angle=sqrt(2)) +
+  create_art(n=360,angle=sqrt(3)) +
+  create_art(n=360,angle=sqrt(5)) +
+  create_art(n=360,angle=pi/7) +
+  create_art(n=360,angle=pi/9) +
+  create_art(n=360,angle=pi/46) +
+  create_art(n=360,angle=2) +
+  create_art(n=360,angle=1) +
+  plot_layout(ncol = 4)</code></pre>
+<p><img src="/post/2019-01-29-playing-around-with-phyllotactic-spirals_files/figure-html/VariationsOfArt-1.png" width="1536" /></p>
+<pre class="r"><code>## changing up the u value - number of points to skip in order to connect the points
+create_art(n=360,u=5) +
+  create_art(n=360,u=11) +
+  create_art(n=360,u=13) +
+  create_art(n=360,u=6) +
+  create_art(n=360,u=9) +
+  create_art(n=360,u=8) +
+  create_art(n=360,u=17) +
+  create_art(n=360,u=3) +
+  plot_layout(ncol = 4)</code></pre>
+<p><img src="/post/2019-01-29-playing-around-with-phyllotactic-spirals_files/figure-html/VariationsOfArt-2.png" width="1536" /></p>
+</div>
+<div id="creating-animation-gif" class="section level2">
+<h2>Creating Animation GIF!!!</h2>
+<p>I’ve just discovered that I can utizile image_graph function in magick! I couldn’t figure out if there’s way to plot 2 gifs next to each other, so that both are showing side by side. I also coulnd’t figure out how to plot multiple images using map function but not displaying [[1]] [[2]] [[3]] in output…</p>
+<pre class="r"><code>## Create Rotating Animation
+#imgs_1 &lt;- image_graph(width=600, height=600)
+#params &lt;- tibble(n=1800,u=44,v=seq(0,u-1,by=2),angle=golden_angle)
+#params %&gt;% pwalk(.,~create_art(.) %&gt;% print())
+#dev.off()
+
+## Smoother animation
+#imgs_2 &lt;- image_graph(width=600, height=600)
+#params &lt;- tibble(n=1800,u=22,v=seq(0,u-1,by=1),angle=-golden_angle)
+#params %&gt;% pmap(.,create_art)
+#dev.off()
+
+image_animate(imgs_1,fps=10)</code></pre>
+<p><img src="/post/2019-01-29-playing-around-with-phyllotactic-spirals_files/figure-html/AnimationDisplay-1.gif" /><!-- --></p>
+<pre class="r"><code>image_animate(imgs_2,fps=10)</code></pre>
+<p><img src="/post/2019-01-29-playing-around-with-phyllotactic-spirals_files/figure-html/AnimationDisplay-2.gif" /><!-- --></p>
+</div>
+<div id="plotting-image-side-by-side-with-image_append" class="section level2">
+<h2>Plotting Image Side by Side with image_append</h2>
+<p>While I wasn’t sure how to put 2 animation gifs next to each other, I was able to put images side by side using image_append function!</p>
+<pre class="r"><code>## I&#39;m commenting out below, because I couldn&#39;t figure out how to run it silently...
+#imgs_3 &lt;- image_graph(width=400, height=400)
+#params &lt;- tibble(n=640,u=5,v=seq(0,u-1,by=1),angle=golden_angle)
+#params %&gt;% pmap(.,create_art)
+#dev.off()
+image_join(imgs_3) %&gt;% image_append()</code></pre>
+<p><img src="/post/2019-01-29-playing-around-with-phyllotactic-spirals_files/figure-html/AppendImageFunction-1.png" width="1000" /></p>
+<pre class="r"><code>#imgs_4 &lt;- image_graph(width=400, height=400)
+#params &lt;- tibble(n=640,u=10,v=seq(0,u-1,by=2),angle=c(sqrt(2),sqrt(3),sqrt(4),sqrt(5),sqrt(6)))
+#params %&gt;% pmap(.,create_art)
+#dev.off()
+image_join(imgs_4) %&gt;% image_append()</code></pre>
+<p><img src="/post/2019-01-29-playing-around-with-phyllotactic-spirals_files/figure-html/AppendImageFunction-2.png" width="1000" /></p>
+</div>
+<div id="generating-art-with-different-colour-palette" class="section level2">
+<h2>Generating Art with Different Colour Palette!</h2>
+<pre class="r"><code>## Finally You can also add colours to it.
+create_art(u=36,colors=hue_pal()(4)) + 
+  create_art(u=36,colors=hue_pal(c=60)(4))</code></pre>
+<p><img src="/post/2019-01-29-playing-around-with-phyllotactic-spirals_files/figure-html/ColourfulArt-1.png" width="1536" /></p>
+<pre class="r"><code>## Using different palette
+create_art(u=8,colors=ggthemes::tableau_color_pal(&quot;Hue Circle&quot;)(19), angle=2*pi-golden_angle) +
+create_art(u=8,colors=ggthemes::tableau_color_pal(&quot;Classic Cyclic&quot;)(13)) </code></pre>
+<p><img src="/post/2019-01-29-playing-around-with-phyllotactic-spirals_files/figure-html/ColourfulArt-2.png" width="1536" /></p>
+<pre class="r"><code>## One Last one! 
+create_art(n=3600,u=18, colors=ggthemes::canva_pal(&quot;Fun and cheerful&quot;)(4)) + 
+  create_art(n=3600,u=18, colors=ggthemes::canva_pal()(4), angle=-golden_angle)</code></pre>
+<p><img src="/post/2019-01-29-playing-around-with-phyllotactic-spirals_files/figure-html/ColourfulArt-3.png" width="1536" /></p>
+</div>
