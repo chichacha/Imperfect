@@ -6,10 +6,124 @@
     <description>Recent content in R on Chi&#39;s Impe[r]fect Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 17 Oct 2018 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 08 Sep 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/categories/r/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Built-in Colour Names in R</title>
+      <link>/2019/09/08/mysterious-colour-names-in-r/</link>
+      <pubDate>Sun, 08 Sep 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/2019/09/08/mysterious-colour-names-in-r/</guid>
+      <description>Quite often when you just want to whip out some quick plots, I like to assign the colours by colour names. Some of my go-to colours are… tomato,darkorange,turquioise,darkgrey,lightgrey.
+Recently I realized that I can get all of built-in colour names available in R to use by typing colors() or colours(). So I thought I’ll do bit of studying on colour names.
+After staring at colour names for bit, it really made me wonder who has came up with these selection of colours in first place.</description>
+    </item>
+    
+    <item>
+      <title>Playing Around with Phyllotactic Spirals</title>
+      <link>/2019/01/29/playing-around-with-phyllotactic-spirals/</link>
+      <pubDate>Tue, 29 Jan 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/2019/01/29/playing-around-with-phyllotactic-spirals/</guid>
+      <description>I wanted to figure out how to create gif animation using the magick, so I decided I’ll try that out with ggplot2 spiral art.
+Loading up packages I’m definitely in love with “magick” right now :)
+library(tidyverse) ## for pretty much everything... library(magick) ## I&amp;#39;m now a magick fan!!! library(scales) ## Handy when it comes to scaling, but I also love show_col function library(patchwork) ## put ggplot side by side easily :) ## Let&amp;#39;s just set some of my favourite number.</description>
+    </item>
+    
+    <item>
+      <title>Extracting colours from your images with Image Quantization</title>
+      <link>/2019/01/19/extracting-colours-from-your-images-with-image-quantization/</link>
+      <pubDate>Sat, 19 Jan 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/2019/01/19/extracting-colours-from-your-images-with-image-quantization/</guid>
+      <description>magick really does the “Magic!” I have been playing around bit with package “magick”, and I think I am now hooked… Although I haven’t been able to understand everything written in vignette just yet.
+One of function I got really excited is image_quantize. This function will reduce the number of unique colours used in the image. i.e. I thought this is yet another way you can extract colours from an image!</description>
+    </item>
+    
+    <item>
+      <title>Making Original Bingo - Heart Theme</title>
+      <link>/2019/01/06/making-original-bingo-card-heart-theme/</link>
+      <pubDate>Sun, 06 Jan 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/2019/01/06/making-original-bingo-card-heart-theme/</guid>
+      <description>I have learned how to draw a heart with mathmatical equation, in fact there are so many “curves” you can draw with equation. Amazing, right?!? You can find all sorts of different curves on Wolfram Mathworld site. I’m really curious how did people find equation itself for some of shapes?
+Also at last family reunion, I’ve played “Bingo”, which I haven’t played for ages! It’s a great game when you have wide range of age groups, because kids were having tons of fun, but so were adults and grand parents!</description>
+    </item>
+    
+    <item>
+      <title>Bubble Packed Chart with R using packcircles package</title>
+      <link>/2018/12/22/bubble-packed-chart-with-r-using-packcircles-package/</link>
+      <pubDate>Sat, 22 Dec 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/2018/12/22/bubble-packed-chart-with-r-using-packcircles-package/</guid>
+      <description>Tableau has chart type called “Packed Bubble Chart”, while I haven’t really utilized packed bubble chart much, I always thought they are fun and beautiful. I wanted to try creating same chart using R, and I came across package called packcircles.
+Reading vignettes was really helpful to figure out how to use the package!!
+- introduction vignettes - Progressive packing vignettes to get started on using this package.
+Creating Bubble Packed Abstract Art… I didn’t really have data sets handy to use it for this type of chart, so I’ve decided to play around with image.</description>
+    </item>
+    
+    <item>
+      <title>Having bit of party with Material Colour Palette</title>
+      <link>/2018/12/09/having-bit-of-party-with-material-colour-palette/</link>
+      <pubDate>Sun, 09 Dec 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/2018/12/09/having-bit-of-party-with-material-colour-palette/</guid>
+      <description>Continuing on with my “slight?” obsession with colours… I love colours in “Material Colour Palette”. There various website that will lets you grab the colours by clicking, such as this one, but I just wanted to have little handy cheet sheet for myself, so I’ve decided I’ll do that using R &amp;amp; my favourite ggplot2.
+Getting colours out of image using package “imager” After quick search, I came across image with all the material colour, so first things I’ve tried is to get colours out of image using imager.</description>
+    </item>
+    
+    <item>
+      <title>Plotting Traditional Colours of Japan </title>
+      <link>/2018/11/29/plotting-traditional-colours-of-japan/</link>
+      <pubDate>Thu, 29 Nov 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/2018/11/29/plotting-traditional-colours-of-japan/</guid>
+      <description>I was curious to know what colours were Traditional Colours of Japan. One of the site I came across showing 465 palettes of Japanese colour is this one. Japanese Site with 465 palettes of traditional colour. While site displays colour beautifully, to see every colour you need to scroll quite bit, so I wanted to plot them using ggplot2.
+First, I wanted to figure out if there’s way to plot many different colours at once, but in somewhat organized manner.</description>
+    </item>
+    
+    <item>
+      <title>Utilizing K-means to extract colours from your favourite images</title>
+      <link>/2018/11/12/utilizing-k-means-to-extract-colours-from-your-favourite-images/</link>
+      <pubDate>Mon, 12 Nov 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/2018/11/12/utilizing-k-means-to-extract-colours-from-your-favourite-images/</guid>
+      <description>I have been playing with package called imager, documentation on this package was extremely helpful! I have read through “getting started” as well as few other tutorial &amp;amp; examples.
+I love colours… Tools like colourlovers, Adobe Color CC, Canva Color Palette Generators are great extracting colours from photo (or in general just getting inspirations for colour palette), but I wanted to figure out the way to extract colours from image using R.</description>
+    </item>
+    
+    <item>
+      <title>Voronoi diagram with ggvoronoi package with Train Station data</title>
+      <link>/2018/11/10/voronoi-diagram-with-ggvoronoi-package-with-train-station-data/</link>
+      <pubDate>Sat, 10 Nov 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/2018/11/10/voronoi-diagram-with-ggvoronoi-package-with-train-station-data/</guid>
+      <description>I’ve always been curious to make Voronoi diagram, I just think they are beautiful! When I came across data set with train stations in Japan. I instantly thought this would be great data sets to make Voronoi diagram! I’ve gotten data sets from (Ekidata)[http://www.ekidata.jp/] site. I’m amazed how many train stations we have in Japan, as well as coverage of train systems in Japan.
+There are couple of packages I could’ve used to make Voronoi diagram, but I’ve utilized package ggvoronoi.</description>
+    </item>
+    
+    <item>
+      <title>Phyllotaxis Sprial and Prime Numbers - Experiment</title>
+      <link>/2018/10/28/phyllotaxis-sprial-and-prime-numbers-experiment/</link>
+      <pubDate>Sun, 28 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/2018/10/28/phyllotaxis-sprial-and-prime-numbers-experiment/</guid>
+      <description>I recently tried out Data Camp’s project called “Phyllotaxis: Draw flowers using mathematics”. Now I’m hooked on drawing spirals using golden angle. Also the mathematical art on instructor’s blog, Fronkostin is just amazing!
+Separately on twitter, I’ve gotten message on art with prime number, and that got me thinking to experiment with prime number &amp;amp; phyllotaxis flowers. I couldn’t figure out how I’d generate prime numbers in R, but I came across site where you can download prime numbers.</description>
+    </item>
+    
+    <item>
+      <title>Popular Halloween Candy on US State Grid Map</title>
+      <link>/2018/10/25/popular-halloween-candy-on-us-state-grid-map/</link>
+      <pubDate>Thu, 25 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/2018/10/25/popular-halloween-candy-on-us-state-grid-map/</guid>
+      <description>Halloween is coming..! Halloween is just around the corner, I am still trying to decide which candies to purchase this year for trick-or-treaters.
+Initially I was looking for data sets maybe comparing American chocolate bars vs Canadian chocolate bars possibly with sugar contents or lists of ingredients. I am really curious why there are big differences in candy between Canada and US, but for now I couldn’t find them instead I came across below data sets.</description>
+    </item>
     
     <item>
       <title>Cannabis Curve with ggplot2 </title>

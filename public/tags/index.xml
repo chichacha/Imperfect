@@ -6,10 +6,19 @@
     <description>Recent content in Tags on Chi&#39;s Impe[r]fect Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 13 Oct 2018 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 29 Jan 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Art</title>
+      <link>/tags/art/</link>
+      <pubDate>Tue, 29 Jan 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/art/</guid>
+      <description></description>
+    </item>
     
     <item>
       <title>Circlize</title>
@@ -21,11 +30,92 @@
     </item>
     
     <item>
+      <title>Colour</title>
+      <link>/tags/colour/</link>
+      <pubDate>Sun, 09 Dec 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/colour/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Geofacet</title>
+      <link>/tags/geofacet/</link>
+      <pubDate>Thu, 25 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/geofacet/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Ggforce</title>
+      <link>/tags/ggforce/</link>
+      <pubDate>Sun, 08 Sep 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/ggforce/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>Ggplot2</title>
       <link>/tags/ggplot2/</link>
-      <pubDate>Wed, 17 Oct 2018 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 09 Dec 2018 00:00:00 +0000</pubDate>
       
       <guid>/tags/ggplot2/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Ggraph</title>
+      <link>/tags/ggraph/</link>
+      <pubDate>Sun, 08 Sep 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/ggraph/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Ggvoronoi</title>
+      <link>/tags/ggvoronoi/</link>
+      <pubDate>Mon, 12 Nov 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/ggvoronoi/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Imager</title>
+      <link>/tags/imager/</link>
+      <pubDate>Sat, 19 Jan 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/imager/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Jpndistrict</title>
+      <link>/tags/jpndistrict/</link>
+      <pubDate>Sat, 10 Nov 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/jpndistrict/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Jsonlite</title>
+      <link>/tags/jsonlite/</link>
+      <pubDate>Thu, 25 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/jsonlite/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Kmeans</title>
+      <link>/tags/kmeans/</link>
+      <pubDate>Mon, 12 Nov 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/kmeans/</guid>
       <description></description>
     </item>
     
@@ -39,38 +129,65 @@
     </item>
     
     <item>
+      <title>Magick</title>
+      <link>/tags/magick/</link>
+      <pubDate>Tue, 29 Jan 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/magick/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Mapdata</title>
+      <link>/tags/mapdata/</link>
+      <pubDate>Sat, 10 Nov 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/mapdata/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Packcircles</title>
+      <link>/tags/packcircles/</link>
+      <pubDate>Sat, 22 Dec 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/packcircles/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Patchwork</title>
+      <link>/tags/patchwork/</link>
+      <pubDate>Tue, 29 Jan 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/patchwork/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Plotly</title>
+      <link>/tags/plotly/</link>
+      <pubDate>Mon, 12 Nov 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/plotly/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>Rvest</title>
       <link>/tags/rvest/</link>
-      <pubDate>Fri, 05 Oct 2018 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 06 Jan 2019 00:00:00 +0000</pubDate>
       
       <guid>/tags/rvest/</guid>
       <description></description>
     </item>
     
     <item>
-      <title>Suncalc</title>
-      <link>/tags/suncalc/</link>
-      <pubDate>Sat, 26 May 2018 00:00:00 +0000</pubDate>
+      <title>Scales</title>
+      <link>/tags/scales/</link>
+      <pubDate>Sun, 08 Sep 2019 00:00:00 +0000</pubDate>
       
-      <guid>/tags/suncalc/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Test</title>
-      <link>/tags/test/</link>
-      <pubDate>Sat, 19 May 2018 00:00:00 +0000</pubDate>
-      
-      <guid>/tags/test/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Tidytext</title>
-      <link>/tags/tidytext/</link>
-      <pubDate>Sat, 13 Oct 2018 00:00:00 +0000</pubDate>
-      
-      <guid>/tags/tidytext/</guid>
+      <guid>/tags/scales/</guid>
       <description></description>
     </item>
     
